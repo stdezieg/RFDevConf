@@ -1,0 +1,55 @@
+<unit id="03" name="DSP-Link Frequency Transmitter">
+
+  <param name="DSP Target" visualization="dropdown">
+    <enumentry name="DSP A" value="0"/>
+    <enumentry name="DSP B" value="1"/>
+    <reg adr="00" bitmask="01"/>
+  </param>
+  
+  <param name="DSP Register Address" unit="" scalefactor="1" offset="0" visualization="text" value="0">
+    <reg adr="03" bitmask="ff"/>
+    <reg adr="04" bitmask="ff"/>
+  </param>
+ 
+  <param name="DSP Register Data" unit="" scalefactor="1" offset="0" visualization="text" value="0">
+    <reg adr="01" bitmask="ff"/>
+    <reg adr="02" bitmask="ff"/>
+  </param>
+
+  <param name="Streaming Data Start Value" unit="" scalefactor="1" offset="0" visualization="text" value="6553600">
+    <reg adr="05" bitmask="ff"/>
+    <reg adr="06" bitmask="ff"/>
+    <reg adr="07" bitmask="ff"/> 
+    <reg adr="08" bitmask="ff"/>
+  </param>
+
+  <param name="Streaming Data Stop Value" unit="" scalefactor="1" offset="0" visualization="text" value="262144000">
+    <reg adr="09" bitmask="ff"/>
+    <reg adr="0A" bitmask="ff"/>
+    <reg adr="0B" bitmask="ff"/>
+    <reg adr="0C" bitmask="ff"/>
+  </param>
+
+  <param name="Streaming Data Increment" unit="" scalefactor="1" offset="0" visualization="text" value="255590">
+    <reg adr="0D" bitmask="ff"/>
+    <reg adr="0E" bitmask="ff"/>
+    <reg adr="0F" bitmask="ff"/>
+    <reg adr="10" bitmask="ff"/>
+  </param>
+
+  <param name="Streaming Data Rate" unit="us" scalefactor="25.0" offset="0" visualization="text" value="1000.0">
+    <reg adr="11" bitmask="ff"/>
+    <reg adr="12" bitmask="ff"/>
+  </param>
+
+  <param name="Streaming Data Type" visualization="dropdown">
+    <enumentry name="Synchrotron Frequency" value="4"/>
+    <enumentry name="Current Frequency" value="0"/>
+    <enumentry name="Phase Difference" value="2"/>
+    <reg adr="13" bitmask="0F"/>
+  </param>
+
+  <param name="Update" visualization="hidden" value="0">
+    <reg adr="80" bitmask="ff"/>
+  </param>
+</unit>

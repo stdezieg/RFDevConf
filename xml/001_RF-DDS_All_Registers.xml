@@ -1,0 +1,315 @@
+<unit id="01" name="RF DDS">
+
+	<param name="DDS Reset" visualization="hidden" value="0">
+		<reg adr="8A" bitmask="ff"/>
+	</param>
+
+  <param name="Update Clock" visualization="hidden" value="64">
+    <reg adr="19" bitmask="ff"/>
+    <reg adr="18" bitmask="ff"/>
+    <reg adr="17" bitmask="ff"/>
+    <reg adr="16" bitmask="ff"/>
+  </param>
+<!-- scalefactor 2^14 / 360 -->
+  <param name="Phase Adjust Register 1" unit="Deg" scalefactor="45.511111111111111111111111111111" offset="0" visualization="text" value="0.0">
+    <reg adr="01" bitmask="ff"/>
+    <reg adr="00" bitmask="3f"/>
+  </param>
+
+<!-- scalefactor 2^14 / 360 -->
+  <param name="Phase Adjust Register 2" unit="Deg" scalefactor="45.511111111111111111111111111111" offset="0" visualization="text" value="0.0">
+    <reg adr="03" bitmask="ff"/>
+    <reg adr="02" bitmask="3f"/>
+  </param>
+
+<!-- factor 2^48 /200 MHz x 8 -->
+  <param name="Frequency 1" unit="MHz" scalefactor="11258999068426.24" offset="0" visualization="text" value="1.0">
+    <reg adr="09" bitmask="ff"/>
+    <reg adr="08" bitmask="ff"/>
+    <reg adr="07" bitmask="ff"/>
+    <reg adr="06" bitmask="ff"/>
+    <reg adr="05" bitmask="ff"/>
+    <reg adr="04" bitmask="ff"/>
+  </param>
+  <param name="LowerBytesNULL" unit="MHz" scalefactor="1.0" offset="0" visualization="hidden" value="0.0">
+    <reg adr="09" bitmask="ff"/>
+    <reg adr="08" bitmask="ff"/>
+    <reg adr="07" bitmask="ff"/>
+  </param>
+
+<!-- factor 2^48 /200 MHz x 8 -->
+  <param name="Frequency 2" visualization="hidden" unit="MHz" scalefactor="11258999068426.24" offset="0" value="1.0">
+    <reg adr="0F" bitmask="ff"/>
+    <reg adr="0E" bitmask="ff"/>
+    <reg adr="0D" bitmask="ff"/>
+    <reg adr="0C" bitmask="ff"/>
+    <reg adr="0B" bitmask="ff"/>
+    <reg adr="0A" bitmask="ff"/>
+  </param>
+
+<!-- factor 2^48 / 200 MHz /P=64-->
+  <param name="KO Shift" unit="Hz" scalefactor="21990.23255552" offset="0" visualization="text" value="0.0">
+    <reg adr="15" bitmask="ff"/>
+    <reg adr="14" bitmask="ff"/>
+    <reg adr="13" bitmask="ff"/>
+    <reg adr="12" bitmask="ff"/>
+    <reg adr="11" bitmask="ff"/>
+    <reg adr="10" bitmask="ff"/>
+  </param>
+
+<!-- factor 1 ms / (5 ns *64)-->
+  <param name="Ramp Rate Clock"  unit ="ms" scalefactor="3125.0" visualization="text" value="0.0">
+    <reg adr="1C" bitmask="ff"/>
+    <reg adr="1B" bitmask="ff"/>
+    <reg adr="1A" bitmask="ff"/>
+  </param>
+  
+  <param name="Comp Power Down" visualization="chkbox" value="0">
+    <reg adr="1D" bitmask="10"/>
+  </param>
+
+  <param name="Res. low" visualization="hidden" value="0">
+    <reg adr="1D" bitmask="08"/>
+  </param>
+
+  <param name="QDAC Power Down" visualization="chkbox" value="0">
+    <reg adr="1D" bitmask="04"/>
+  </param>
+
+  <param name="DAC Power Down" visualization="chkbox" value="0">
+    <reg adr="1D" bitmask="02"/>
+  </param>
+
+  <param name="DIG Power Down" visualization="chkbox" value="0">
+    <reg adr="1D" bitmask="01"/>
+  </param>
+
+  <param name="PLL Range" visualization="chkbox" value="0">
+    <reg adr="1E" bitmask="40"/>
+  </param>
+
+  <param name="Bypass PLL" visualization="chkbox" value="1">
+    <reg adr="1E" bitmask="20"/>
+  </param>
+
+  <param name="PLL Multiplier" visualization="text" value="0">
+    <reg adr="1E" bitmask="1F"/>
+  </param>
+  
+  <param name="Clear Frequency Accu" visualization="chkbox" value="1">
+    <reg adr="1F" bitmask="80"/>
+  </param>
+  
+  <param name="Clear Phase Accu" visualization="chkbox" value="0">
+    <reg adr="1F" bitmask="40"/>
+  </param>
+  
+  <param name="Triangle" visualization="chkbox" value="0">
+    <reg adr="1F" bitmask="20"/>
+  </param>
+  
+  <param name="Source QDAC" visualization="chkbox" value="0">
+    <reg adr="1F" bitmask="10"/>
+  </param>
+ 
+  <param name="DDS Mode" visualization="dropdown" value="0">
+    <enumentry name="CW"    value="0"/>
+    <enumentry name="FSK"   value="1"/>
+    <enumentry name="RFSK"  value="2"/>
+    <enumentry name="Chirp" value="3"/>
+    <enumentry name="BPSK"  value="4"/>
+    <reg adr="1F" bitmask="0E"/>
+  </param>
+
+  <param name="Internal Update Clock" visualization="chkbox" value="0">
+    <reg adr="1F" bitmask="01"/>
+  </param>
+ 
+  <param name="Bypass Inv. Sinc Filter" visualization="chkbox" value="1">
+    <reg adr="20" bitmask="40"/>
+  </param>
+ 
+  <param name="OSK Enable" visualization="chkbox" value="0">
+    <reg adr="20" bitmask="20"/>
+  </param>
+
+  <param name="OSK Intern" visualization="chkbox" value="0">
+    <reg adr="20" bitmask="10"/>
+  </param>
+
+  <param name="LSB First" visualization="hidden" value="0">
+    <reg adr="20" bitmask="02"/>
+  </param>
+
+  <param name="SDO Active" visualization="hidden" value="0">
+    <reg adr="20" bitmask="01"/>
+  </param>
+
+ <param name="I Output Shape Key Mult." scalefactor="4096" offset="0" visualization="text" value="1.0" unit="V">
+    <reg adr="22" bitmask="ff"/>
+    <reg adr="21" bitmask="0f"/>
+  </param>
+
+  <param name="Q Output Shape Key Mult." scalefactor="4096" offset="0" visualization="text" value="1.0" unit="V">
+    <reg adr="24" bitmask="ff"/>
+    <reg adr="23" bitmask="0f"/>
+  </param>
+
+  <param name="Output Shape Key Ramp Rate" visualization="text" value="64">
+    <reg adr="25" bitmask="ff"/>
+  </param>
+  
+  <param name="Q DAC" scalefactor="4096" offset="0" visualization="text" value="1.0">
+    <reg adr="27" bitmask="ff"/>
+    <reg adr="26" bitmask="0f"/>
+  </param>
+   
+  <param name="External Clock" visualization="chkbox" value="1">
+    <reg adr="81" bitmask="01"/>
+  </param>
+  
+  <param name="External T0" visualization="chkbox" value="0">
+    <reg adr="81" bitmask="02"/>
+  </param>
+
+  <param name="DSP Correction Off" visualization="chkbox" value="0">
+    <reg adr="90" bitmask="01"/>
+  </param>
+
+  <param name="DSP Timeout Off" visualization="chkbox" value="0">
+    <reg adr="90" bitmask="02"/>
+  </param>
+
+  <param name="Phase Correction enable" visualization="chkbox" value="1">
+    <reg adr="90" bitmask="04"/>
+  </param>
+
+  <param name="Frequency Multiplier" visualization="dropdown" value="1">
+    <enumentry name=" x1" value="1"/>
+    <enumentry name=" x2" value="2"/>
+    <enumentry name=" x4" value="4"/>
+    <reg adr="91" bitmask="ff"/>
+  </param>
+<!--    <enumentry name=" x3" value="3"/>
+    <enumentry name=" x5" value="5"/>
+    <enumentry name=" x6" value="6"/>
+    <enumentry name=" x7" value="7"/>
+    <enumentry name=" x8" value="8"/>
+    <enumentry name=" x9" value="9"/>
+    <enumentry name="x10" value="10"/>
+    <enumentry name="x11" value="11"/>
+    <enumentry name="x12" value="12"/>
+    <enumentry name="x13" value="13"/>
+    <enumentry name="x14" value="14"/>
+    <enumentry name="x15" value="15"/> -->
+
+  <param name="Update Source" visualization="dropdown" value="1">
+    <enumentry name="Update Backplane unsync." value="0"/>
+    <enumentry name="Update Backplane sync." value="1"/>
+    <enumentry name="Update Extern T0"   value="2"/>
+    <reg adr="92" bitmask="ff"/>
+  </param>
+  
+  <param name="Trigger 1 function" visualization="dropdown" value="0">
+    <enumentry name="Burst Trigger" value="0"/>
+    <enumentry name="Inter-DDS Clear Accu" value="1"/>
+    <enumentry name="Frequency Shift" value="2"/>
+<!--    <enumentry name="Phase Reset" value="3"/> -->
+    <reg adr="93" bitmask="ff"/>
+  </param>
+<!-- scalefactor 2^48/200-->
+  <param name="Offset Frequency" unit="MHz" scalefactor="1407374883553.28" offset="0" visualization="text" value="0.0">
+    <reg adr="99" bitmask="ff"/>
+    <reg adr="98" bitmask="ff"/>
+    <reg adr="97" bitmask="ff"/>
+    <reg adr="96" bitmask="ff"/>
+    <reg adr="95" bitmask="ff"/>
+    <reg adr="94" bitmask="ff"/>
+  </param>
+
+	<param name="Burst Trigger Data0" visualization="hidden" value="0">
+		<reg adr="A0" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data1" visualization="hidden" value="192">
+		<reg adr="A1" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data2" visualization="hidden" value="0">
+		<reg adr="A2" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data3" visualization="hidden" value="0">
+		<reg adr="A3" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data4" visualization="hidden" value="0">
+		<reg adr="A4" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data5" visualization="hidden" value="0">
+		<reg adr="A5" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data6" visualization="hidden" value="0">
+		<reg adr="A6" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data7" visualization="hidden" value="128">
+		<reg adr="A7" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data8" visualization="hidden" value="1">
+		<reg adr="A8" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Data9" visualization="hidden" value="0">
+		<reg adr="A9" bitmask="ff"/>
+	</param>
+
+	<param name="Burst Trigger Address0" visualization="hidden" value="146">
+		<reg adr="B0" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address1" visualization="hidden" value="31">
+		<reg adr="B1" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address2" visualization="hidden" value="128">
+		<reg adr="B2" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address3" visualization="hidden" value="4">
+		<reg adr="B3" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address4" visualization="hidden" value="5">
+		<reg adr="B4" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address5" visualization="hidden" value="6">
+		<reg adr="B5" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address6" visualization="hidden" value="7">
+		<reg adr="B6" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address7" visualization="hidden" value="31">
+	<reg adr="B7" bitmask="ff"/>
+		</param>
+	<param name="Burst Trigger Address8" visualization="hidden" value="146">
+		<reg adr="B8" bitmask="ff"/>
+	</param>
+	<param name="Burst Trigger Address9" visualization="hidden" value="128">
+		<reg adr="B9" bitmask="ff"/>
+	</param>
+
+  <param name="Own Token Ring Address" visualization="dropdown" value="16">
+	<enumentry name="0x10" value="16"/>
+	<enumentry name="0x11" value="17"/>
+	<enumentry name="0x12" value="18"/>
+	<enumentry name="0x13" value="19"/>
+	<enumentry name="0x14" value="20"/>
+	<enumentry name="0x15" value="21"/>
+	<enumentry name="0x16" value="22"/>
+	<enumentry name="0x17" value="23"/>
+	<enumentry name="0x18" value="24"/>
+	<enumentry name="0x19" value="25"/>
+	<enumentry name="0x1A" value="26"/>
+	<enumentry name="0x1B" value="27"/>
+	<enumentry name="0x1C" value="28"/>
+	<enumentry name="0x1D" value="29"/>
+	<enumentry name="0x1E" value="30"/>
+	<enumentry name="0x1F" value="31"/>
+	<reg adr="9B" bitmask="ff"/>
+  </param>
+
+  <param name="DDS Update" visualization="hidden" value="0">
+    <reg adr="80" bitmask="ff"/>
+  </param>
+</unit>

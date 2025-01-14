@@ -1,0 +1,53 @@
+<unit id="0x" name="Amplitude-Controller">
+
+  <param name="Desired Value Channel 1" unit="" scalefactor="1" offset="0" visualization="text" value="6000">
+    <reg adr="00" bitmask="ff"/> 
+    <reg adr="01" bitmask="ff"/>
+  </param>
+
+  <param name="Desired Value Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="6000">
+    <reg adr="04" bitmask="ff"/> 
+    <reg adr="05" bitmask="ff"/>
+  </param>
+
+<param name="Manual Gain Channel 1" unit="" scalefactor="1" offset="0" visualization="text" value="50">
+    <reg adr="0E" bitmask="ff"/> 
+  </param>
+
+  <param name="Manual Gain Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="50">
+    <reg adr="0F" bitmask="ff"/> 
+  </param>
+
+  <param name="Mode Channel 1" visualization="dropdown" value="0">
+    <enumentry name="Auto" value="0"/>
+    <enumentry name="Manual" value="1"/>
+    <reg adr="12" bitmask="02"/>
+  </param>
+  
+  <param name="Mode Channel 2" visualization="dropdown" value="0">
+    <enumentry name="Auto" value="0"/>
+    <enumentry name="Manual" value="1"/>
+    <reg adr="12" bitmask="04"/>
+  </param>
+
+      <param name="Update Rate" unit="us" scalefactor="50" offset="0" visualization="text" value="50.0">
+    <reg adr="08" bitmask="ff"/> 
+    <reg adr="09" bitmask="ff"/>
+    <reg adr="0A" bitmask="ff"/>
+    <reg adr="0B" bitmask="ff"/>
+  </param>
+
+  <param name="Amplitude Window" unit="" scalefactor="1" offset="0" visualization="text" value="500">
+    <reg adr="0C" bitmask="ff"/> 
+    <reg adr="0D" bitmask="ff"/>
+  </param>
+
+  <param name="Reset" visualization="chkbox" value="0">
+    <reg adr="12" bitmask="01"/>
+  </param>
+    
+  <param name="Set Trigger Out" visualization="hidden" value="1">
+    <reg adr="12" bitmask="80"/>
+  </param>
+    
+</unit>

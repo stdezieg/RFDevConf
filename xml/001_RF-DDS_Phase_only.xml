@@ -1,0 +1,14 @@
+<unit id="01" name="RF DDS">
+
+  <param name="Phase Adjust Register 1" unit="Deg" scalefactor="45.511111111111111111111111111111" offset="0" visualization="text" value="0.0">
+    <reg adr="01" bitmask="ff"/>
+    <reg adr="00" bitmask="3f"/>
+  </param>
+
+<!-- scalefactor 2^14 / 360 -->
+  <param name="Phase Adjust Register 2" unit="Deg" scalefactor="45.511111111111111111111111111111" offset="0" visualization="text" value="0.0">
+    <reg adr="03" bitmask="ff"/>
+    <reg adr="02" bitmask="3f"/>
+  </param>
+
+</unit>

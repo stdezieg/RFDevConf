@@ -1,0 +1,66 @@
+<unit id="06" name="Ramp Converter">
+<!--
+	<param name="disable ADC1" visualization="chkbox" value="0">
+		<reg adr="11" bitmask="02"/>
+	</param>
+
+	<param name="disable DAC1" visualization="chkbox" value="0">
+		<reg adr="11" bitmask="04"/>
+	</param>
+
+	<param name="disable ADC2" visualization="chkbox" value="0">
+		<reg adr="21" bitmask="02"/>
+	</param>
+
+	<param name="disable DAC2" visualization="chkbox" value="0">
+		<reg adr="21" bitmask="04"/>
+	</param>
+-->
+	<param name="disable OPT1" visualization="chkbox" value="0">
+		<reg adr="11" bitmask="08"/>
+	</param>
+
+	<param name="disable OPT2" visualization="chkbox" value="1">
+		<reg adr="21" bitmask="08"/>
+	</param>
+
+	<param name="multiplex ramps on OPT1" visualization="chkbox" value="0">
+		<reg adr="11" bitmask="01"/>
+	</param>
+
+	<param name="Type of Streaming Data ADC1" visualization="dropdown" value="1">
+		<enumentry name="Target Phase" value="1"/>
+		<enumentry name="Frequency Correction / Synchrotron Frequency" value="2"/>
+<!--		<enumentry name="Frequency" value="0"/>
+		<enumentry name="Relative Amplitude" value="3"/> -->
+		<reg adr="10" bitmask="0F"/>
+	</param>
+
+
+	<param name="Ramp1 Scaling Factor" unit="" scalefactor="1" offset="0" visualization="dropdown" value="22257">
+		<enumentry name="   9 V == 180 degree target phase" value="22257"/>
+		<enumentry name=" 10 V ==  10 kHz synchrotron frequency" value="74802"/>
+		<reg adr="15" bitmask="FF"/>
+		<reg adr="14" bitmask="FF"/>
+		<reg adr="13" bitmask="FF"/>
+		<reg adr="12" bitmask="FF"/>
+	</param>
+
+	<param name="Type of Streaming Data ADC2" visualization="dropdown"  value="2">
+		<enumentry name="Phase Difference" value="1"/>
+		<enumentry name="Frequency Correction / Synchrotron Frequency" value="2"/>
+<!--		<enumentry name="Frequency" value="0"/>
+		<enumentry name="Relative Amplitude" value="3"/> -->
+		<reg adr="20" bitmask="0F"/>
+	</param>
+
+	<param name="Ramp2 Scaling Factor" unit="" scalefactor="1" offset="0" visualization="dropdown" value="74802">
+		<enumentry name="   9 V == 180 degree target phase" value="22257"/>
+		<enumentry name=" 10 V ==  10 kHz synchrotron frequency" value="74802"/>
+		<reg adr="25" bitmask="FF"/>
+		<reg adr="24" bitmask="FF"/>
+		<reg adr="23" bitmask="FF"/>
+		<reg adr="22" bitmask="FF"/>
+	</param>
+
+</unit>

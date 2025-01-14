@@ -1,0 +1,11 @@
+<unit id="10" name="FCT-FIB">
+
+  <param name="Frequency Multiplier" visualization="dropdown" value="1">
+    <enumentry name="20 db" value="0"/>
+    <enumentry name="30 db" value="1"/>
+    <enumentry name="40 db" value="2"/>
+    <enumentry name="50 db" value="3"/>
+    <enumentry name="60 db" value="4"/>
+    <reg adr="10" bitmask="ff"/>
+  </param>
+</unit>

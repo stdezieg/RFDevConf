@@ -1,0 +1,24 @@
+<unit id="0x" name="Amplitude-Controller">
+
+  <param name="Feedforward Gain (Kv)" unit="" scalefactor="262144" offset="0" visualization="text" value="1.0">
+    <reg adr="01" bitmask="ff"/> 
+    <reg adr="02" bitmask="ff"/>
+    <reg adr="03" bitmask="ff"/>
+    <reg adr="04" bitmask="0f"/>
+  </param>
+
+  <param name="Proportional Controller Gain (Kp)" unit="" scalefactor="262144" offset="0" visualization="text" value="1.0">
+    <reg adr="05" bitmask="ff"/>
+    <reg adr="06" bitmask="ff"/>
+    <reg adr="07" bitmask="ff"/>
+    <reg adr="08" bitmask="0f"/>
+  </param>
+
+  <param name="Integral Controller Gain (Ki)" unit="" scalefactor="0.004369067" offset="0" visualization="text" value="1.0">
+    <reg adr="09" bitmask="ff"/>
+    <reg adr="0a" bitmask="ff"/>
+    <reg adr="0b" bitmask="ff"/>
+    <reg adr="0c" bitmask="0f"/>
+  </param>
+
+</unit>

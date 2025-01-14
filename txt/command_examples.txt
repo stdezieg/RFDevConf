@@ -1,0 +1,34 @@
+Author: Dennis Ziegelmann
+09/11/22
+Important: The hex-files needs to be in the same directory as RFDevConf.py
+-----------------------------------------------------------------------------------------------------
+
+write command (flash):
+
+$ python RFDevConf.py -w -f -i your_hex_file.hex
+
+write command (RAM):
+
+$ python RFDevConf.py -w -i your_hex_file.hex
+
+-----------------------------------------------------------------------------------------------------
+
+read command (flash):
+
+$ python RFDevConf.py -r -f -o your_output_hex_file.hex
+
+write command (RAM):
+
+$ python RFDevConf.py -r -i your_output_hex_file.hex
+
+-----------------------------------------------------------------------------------------------------
+
+compare command (flash):
+
+$ python RFDevConf.py -c -f -i reference_hex_file.hex
+
+compare command (RAM):
+
+$ python RFDevConf.py -c -i reference_hex_file.hex
+
+-----------------------------------------------------------------------------------------------------

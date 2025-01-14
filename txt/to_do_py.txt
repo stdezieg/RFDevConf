@@ -1,0 +1,6 @@
+- need to rewrite read_from_hex()
+	-> adjust to variable hex file length
+
+
+- need to rewrite CEL_read_write_param()
+	-> rename to read_write_target()
