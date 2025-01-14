@@ -52,7 +52,7 @@ class init_window(QWidget):                                     # START WINDOW -
         self.setLayout(layout)
         self.setGeometry(300, 300, 300, 1)
         self.setWindowTitle("RFDevConf V1.0")
-        self.setWindowIcon(QIcon("index.png"))
+        self.setWindowIcon(QIcon("./png/index.png"))
 
         self.qr = self.frameGeometry()                          # window position (center)
         cp = self.screen().availableGeometry().center()
@@ -67,8 +67,11 @@ class init_window(QWidget):                                     # START WINDOW -
         layout.addWidget(self.spacer_txt)
         self.device_list = QComboBox()
         self.device_list.addItem("")                                    # list of available device types
-        for file in glob.glob('xml\*.xml'):                             # dynamic xml read with path
+        for file in glob.glob('xml\*.xml'):                             # dynamic xml read with path (needs match)
             self.device_list.addItem(file[4:])                          # cut path and add to device list
+            # self.device_list.addItem(file)                          # cut path and add to device list
+            # print(file[4:])
+
 
         layout.addWidget(self.device_list)
         self.confirm_button = QPushButton("Open Device Configuration", self)
@@ -87,7 +90,7 @@ class init_window(QWidget):                                     # START WINDOW -
         if self.device_list.currentText() == "":                               # error message if no device is selected
             self.finished_box = QMessageBox()
             self.finished_box.setWindowTitle("     ")
-            self.finished_box.setWindowIcon(QIcon("index.png"))
+            self.finished_box.setWindowIcon(QIcon("./png/index.png"))
             self.finished_box.setInformativeText("No Device selected!     ")
             self.finished_box.setStandardButtons(QMessageBox.StandardButton.Ok)
             self.finished_box.show()
@@ -117,7 +120,7 @@ class RFDevConf_Mainwindow(QMainWindow):                                       #
     def initMe(self,input_xml):                                             # window init params
         self.setWindowTitle('RFDevConf' + ' - ' + input_xml[4:-4])
         self.setGeometry(300, 300, 325, 325)
-        self.setWindowIcon(QIcon("index.png"))
+        self.setWindowIcon(QIcon("./png/index.png"))
         menubar = self.menuBar()
         start = menubar.addMenu("&Start")
         submenu1 = QAction("Device Type Configuration" , self)
@@ -151,7 +154,7 @@ class CEL_hexflash(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.setGeometry(300, 300, 325, 1)
-        self.setWindowIcon(QIcon("index.png"))
+        self.setWindowIcon(QIcon("./png/index.png"))
         self.setWindowTitle("CEL Hexflash Application")
 
         self.qr = self.frameGeometry()                                         # center window
@@ -198,7 +201,7 @@ class CEL_hexflash(QWidget):
 
         self.finished_box = QMessageBox()
         self.finished_box.setWindowTitle("     ")
-        self.finished_box.setWindowIcon(QIcon("index.png"))
+        self.finished_box.setWindowIcon(QIcon("./png/index.png"))
         self.finished_box.setInformativeText("       Success!              ")
         self.finished_box.setStandardButtons(QMessageBox.StandardButton.Ok)
         self.finished_box.show()
@@ -402,13 +405,14 @@ class DeviceConfiguration(QWidget):
         self.list_of_widgets = []
         self.list_of_param_name = []
         self.list_of_reg_adr = []
-        self.input_xml_file = input_xml
+        self.xml_path = "xml/"
+        self.input_xml_file = self.xml_path + input_xml
         tree = ET.parse(self.input_xml_file)                             # extract xml data
         root = tree.getroot()
         self.xml_data_list = []
 
-        print(self.input_xml_file)
-        print(input_xml)
+        # print(self.input_xml_file)
+        # print(input_xml)
 
         for element in root.findall("./param[@name]"):
             self.list_of_param_name.append(element.attrib)
@@ -476,5 +480,5 @@ class DeviceConfiguration(QWidget):
         self.receive_hexfile()
 
 if __name__ == '__main__':
-    open_main_window() #1
+    open_main_window()
 
