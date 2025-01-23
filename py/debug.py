@@ -146,7 +146,17 @@ class ReceiveFrame:
         self.correct_checksum = self.eval_checksum(self.data, self.header[0])
         # print(self.correct_checksum)
         # print("Header:", self.header[:-2])
+        # print("address (int) in frame:", self.address)
+        # print("address (bin) in frame:", self.cleanup[7:39])
+        # print("raw", raw_input_frame)
 
+        # print("0 - ",self.raw[:8])
+        # print("1 - ",self.raw[8:16])
+        # print("2 - ",self.raw[16:24])
+        # print("3 - ",self.raw[24:32])
+        # print("4 - ",self.raw[32:40])
+        # print("5 - ",self.raw[40:48])
+        # print(self.raw[48:56])
 
         if self.header[-4] == "1":
             self.flash = True
@@ -250,6 +260,7 @@ class SendFrame:
         tmp_list = ''.join(tmp_list)
         # print("frame out w/ fi:    ", tmp_list)
         return tmp_list
+
 
     def send_frame(self, wrapped_packet):
         pass
@@ -375,15 +386,15 @@ if __name__ == '__main__':
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=32))) # returns 02BC0001E84800000000000000000000 on valid agc
 
 
-    # ser.write(bitstring_to_bytes(erase_flash(0)))
+    # ser.write(bitstring_to_bytes(erase_flash(1)))
 		
     ###############################################################################################################################
     # flash agc with correct parameters:
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 0,data="DDAAFF1337FF112233445566778899D7")))
-    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="17701770003C003200060030004F004F")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="00000000000000000000000000000000")))
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 32,data="02BC0001E84800000000000000000000")))
     # verify agc parameters (flash):
-    ser.write(bitstring_to_bytes(read_request(flash=1, address=0))) # returns DDAAFF1337FF112233445566778899D7 on valid agc
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=0))) # returns DDAAFF1337FF112233445566778899D7 on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=16))) # returns 17701770003C003200060030004F004F on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=32))) # returns 02BC0001E84800000000000000000000 on valid agc
     # verify agc parameters (ram):
@@ -391,10 +402,37 @@ if __name__ == '__main__':
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=8))) # returns 17701770003C003200060030004F004F on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=16))) # returns 02BC0001E84800000000000000000000 on valid agc
     ##############################################################################################################################
-		
+    # 65536
+    # ser.write(bitstring_to_bytes(read_request(flash=0, address=0)))
+    # ser.write(bitstring_to_bytes(read_request(flash=0, address=16)))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="DDAAFF1337FF112233445566778899D7")))
+
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="DDAAFF1337FF112233445566778899D7")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="DDAAFF1337FF112233445566778899D7")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 0,data="DDAAFF1337FF112233445566778899D7")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 16,data="01020304050607080910111213141516")))
+
+	#
+    #
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=65536))) # read param 1 set
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=65552))) # read param 2 set
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65536,data="17701770003C003200060030004F004F")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65552,data="02BC0001E84800000000000000000000")))
+
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65536,data="01020304050607080910111213141516")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="01020304050607080910111213141516")))
+
+
+    ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="00000000000000000000133700000000")))
+    # ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash = 0, address = 0, data ="00000000000000000000133700000000"))) # reset!!!))
+
 
     data_in = []
     cnt = 0
+    error_cnt = 0
 
     while True:
         time.sleep(0.25)
@@ -402,10 +440,20 @@ if __name__ == '__main__':
         if ser.inWaiting() > 6: # expecting 26 bytes at serial input
             cnt = cnt + 1
             data_buffer_in = BitArray(ser.read(25)).bin
+            # print(type(data_buffer_in[2]))
+            if data_buffer_in[2] == '1':
+                print("error response!")
+                error_cnt = error_cnt +1
+            # print(data_buffer_in)
             frame_in = ReceiveFrame(data_buffer_in)
+            # print(frame_in.data)
             frame_in = frame_in.cleanup[47:]
             data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
+
             break
+            # loop -> write request
+            # print("-",cnt,"-", " error count:", error_cnt)
+            # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 13,data="01020304050607080910111213141516")))
 
     data_in = data_in[:40]
     print(data_in)

@@ -287,15 +287,15 @@ class DeviceConfiguration(QWidget):
 
         if self.flash_flag == 1:
             print("erasing flash memory. please wait.")
-            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.erase_flash(0)))
+            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.erase_flash(1)))
             time.sleep(1.5)
 
         if self.flash_flag == 1:
             self.ser.write(RFDevConf.bitstring_to_bytes(
-                RFDevConf.write_request(flash=self.flash_flag, address=16, data=data_out[0])))
+                RFDevConf.write_request(flash=self.flash_flag, address=65536, data=data_out[0])))
         elif self.flash_flag == 0:
             self.ser.write(RFDevConf.bitstring_to_bytes(
-                RFDevConf.write_request(flash=self.flash_flag, address=8, data=data_out[0])))
+                RFDevConf.write_request(flash=self.flash_flag, address=16, data=data_out[0])))
         # self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash=self.flash_flag, address=16, data="DDAAFF1337FF112233445566778899D7")))
         # print("data_out[0]", data_out[0])
         start_time = time.time()
@@ -308,20 +308,21 @@ class DeviceConfiguration(QWidget):
                 # print("data_out[1]", data_out[1])
                 if self.flash_flag == 1:
                     self.ser.write(RFDevConf.bitstring_to_bytes(
-                        RFDevConf.write_request(flash=self.flash_flag, address=32, data=data_out[1])))
+                        RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
                 elif self.flash_flag == 0:
                     self.ser.write(RFDevConf.bitstring_to_bytes(
-                        RFDevConf.write_request(flash=self.flash_flag, address=16, data=data_out[1])))
+                        RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
                 break
         print("data transmitted!")
 
         if self.flash_flag == 1:
             time.sleep(0.1) # die braucht er sonst gibts kein reset (warum auch immer...)
-            self.ser.write(RFDevConf.bitstring_to_bytes(
-                RFDevConf.write_request(flash = 0, address = 0, data ="0000000000A500000000000000000000"))) # reset!!!))
+            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash = 0, address = 0, data ="00000000000000000000133700000000"))) # reset!!!))
             print("resetting fpga...")
             time.sleep(3)
             print("FPGA reset done!")
+            # self.ser.flushInput()
+            # self.ser.flushOutput()
 
         print("---------- OPERATION COMPLETED ------------")
 
@@ -335,9 +336,9 @@ class DeviceConfiguration(QWidget):
         self.ser.flushInput()
 
         if self.flash_flag == 1:
-            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=16)))
+            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=65536)))
         elif self.flash_flag == 0:
-            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=8)))
+            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=16)))
 
         data_in = []
         cnt = 0
@@ -358,10 +359,10 @@ class DeviceConfiguration(QWidget):
                 else:
                     if self.flash_flag == 1:
                         self.ser.write(
-                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=32)))
+                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=65552)))
                     elif self.flash_flag == 0:
                         self.ser.write(
-                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=16)))
+                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=24)))
 
         data_in = ''.join(data_in)
         data_in = data_in[:52]
