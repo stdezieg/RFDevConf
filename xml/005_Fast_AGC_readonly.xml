@@ -52,19 +52,15 @@
   </param>
   
   <param name="Update Rate" unit="CLKs" scalefactor="50" offset="0" visualization="text" value="33">
-    <reg adr="08" bitmask="ff"/> 
+    <reg adr="08" bitmask="ff"/>
     <reg adr="09" bitmask="ff"/>
     <reg adr="0A" bitmask="ff"/>
     <reg adr="0B" bitmask="ff"/>
   </param>
 
   <param name="Amplitude Window" unit="" scalefactor="1" offset="0" visualization="text" value="1">
-    <reg adr="0C" bitmask="ff"/> 
+    <reg adr="0C" bitmask="ff"/>
     <reg adr="0D" bitmask="ff"/>
-  </param>
-
-  <param name="Reset" visualization="chkbox" value="0">
-    <reg adr="12" bitmask="01"/>
   </param>
 
   <param name="Set Trigger Out" visualization="chkbox" value="0">

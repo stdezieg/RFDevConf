@@ -417,12 +417,17 @@ class DeviceConfiguration(QWidget):
 
         for element in root.findall("./param[@name]"):
             self.list_of_param_name.append(element.attrib)
+            # print(element.attrib)
             self.xml_data_list.append(element.attrib)
             for registers in element.findall(".//reg[@adr]"):
                 self.xml_data_list.append(registers.attrib)
         for element in root.findall(".//reg[@adr]"):
             self.list_of_reg_adr.append(element.attrib)
 
+        print(self.list_of_param_name)
+        # print(self.xml_data_list)
+        # print(self.list_of_reg_adr)
+        time.sleep(100)
 
         for i in range(len(self.list_of_param_name)): # append here to list of widgets in order to access them by index
             if "hidden" not in list(self.list_of_param_name[i].values()):     # check xml file for "name" value
