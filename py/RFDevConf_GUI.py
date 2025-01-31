@@ -10,6 +10,7 @@ from PyQt6.QtGui import *
 import xml.etree.ElementTree as ET
 import RFDevConf
 from bitstring import BitArray
+import pandas as pd
 
 
 def formatRegDiscription(MemAddress, MemContent16bitHex):
@@ -28,6 +29,23 @@ def formatRegDiscription(MemAddress, MemContent16bitHex):
 
 def get_indices(element, lst):
     return [i for i in range(len(lst)) if lst[i] == element]
+
+def xml_to_dataframe(infile):
+    df = pd.DataFrame()
+    tree = ET.parse(infile)
+    root = tree.getroot()
+
+    for element in root.findall("./param[@name]"):
+        for registers in element.findall(".//reg[@adr]"):
+            registers.attrib.update({'bit width':len(element.findall(".//reg[@adr]"))*8})
+            if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
+                registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
+            break
+        merged_dict = dict(element.attrib)
+        merged_dict.update(registers.attrib)                                             # concentrate sub and main dict
+        df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
+    print(df)
+    return df
 
 def list_duplicates(seq):
   seen = set()
@@ -412,6 +430,8 @@ class DeviceConfiguration(QWidget):
         root = tree.getroot()
         self.xml_data_list = []
 
+        self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
+        print(self.parsed_xml)
         # print(self.input_xml_file)
         # print(input_xml)
 
@@ -424,10 +444,13 @@ class DeviceConfiguration(QWidget):
         for element in root.findall(".//reg[@adr]"):
             self.list_of_reg_adr.append(element.attrib)
 
-        print(self.list_of_param_name)
-        # print(self.xml_data_list)
-        # print(self.list_of_reg_adr)
-        time.sleep(100)
+
+        # for index in self.parsed_xml.index:
+        #     self.list_of_param_name.append(self.parsed_xml['name'][index])
+
+
+        # print(self.list_of_param_name) # need to rework the bottom parser....!
+
 
         for i in range(len(self.list_of_param_name)): # append here to list of widgets in order to access them by index
             if "hidden" not in list(self.list_of_param_name[i].values()):     # check xml file for "name" value
@@ -452,8 +475,9 @@ class DeviceConfiguration(QWidget):
                 self.grid.addWidget(widget,i,2)
                 self.list_of_widgets.append(widget)
 
-            try:
+            try:                                                           #
                 x = list(root[i].attrib.values())
+                print(x)
                 if "dropdown" in x:
                     dropdown_elements = []
                     for e in range(16):
@@ -479,9 +503,9 @@ class DeviceConfiguration(QWidget):
         # write_button.clicked.connect(self.send_hexfile)
         write_button.clicked.connect(self.send_hexfile)
         read_button.clicked.connect(self.receive_hexfile)
-        self.grid.addWidget(write_button,1000,1)
-        self.grid.addWidget(read_button,1000,2)
-        self.grid.addWidget(self.flash_combobox,1000,3)
+        self.grid.addWidget(write_button, 1000, 1)
+        self.grid.addWidget(read_button, 1000, 2)
+        self.grid.addWidget(self.flash_combobox, 1000, 3)
         # self.grid.addWidget(QLabel("Flash"),14,3)
         self.receive_hexfile()
 
