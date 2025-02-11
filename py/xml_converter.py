@@ -17,10 +17,22 @@ def xml_to_dataframe(infile):
         merged_dict = dict(element.attrib)
         merged_dict.update(registers.attrib)                                             # concentrate sub and main dict
         df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
-    print(df)
+    # print(df)
+    print(df.to_string())
     return df
 
-xml_to_dataframe(input_xml)
+df = xml_to_dataframe(input_xml)
+# for column in df:
+
+
+columnSeriesObj = df['name']
+# for i in range(len(columnSeriesObj.values)):
+#     print(columnSeriesObj.values[i])
+
+# print(columnSeriesObj.values[0])
+# print(len(columnSeriesObj.values))
+
+
 
 # list = []
 # print(len(df))

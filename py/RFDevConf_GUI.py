@@ -44,7 +44,7 @@ def xml_to_dataframe(infile):
         merged_dict = dict(element.attrib)
         merged_dict.update(registers.attrib)                                             # concentrate sub and main dict
         df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
-    print(df)
+    # print(df)
     return df
 
 def list_duplicates(seq):
@@ -430,69 +430,91 @@ class DeviceConfiguration(QWidget):
         root = tree.getroot()
         self.xml_data_list = []
 
-        self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
-        print(self.parsed_xml)
         # print(self.input_xml_file)
         # print(input_xml)
 
         for element in root.findall("./param[@name]"):
             self.list_of_param_name.append(element.attrib)
             # print(element.attrib)
-            self.xml_data_list.append(element.attrib)
+            #self.xml_data_list.append(element.attrib)
+
             for registers in element.findall(".//reg[@adr]"):
                 self.xml_data_list.append(registers.attrib)
         for element in root.findall(".//reg[@adr]"):
             self.list_of_reg_adr.append(element.attrib)
 
+        self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
+        # print(self.parsed_xml)
+        columnSeriesObj = self.parsed_xml['name']
+        for i in range(len(columnSeriesObj.values)):
+            print(columnSeriesObj.values[i])
+        columnSeriesObj = self.parsed_xml['visualization']
+            # self.list_of_param_name.append(columnSeriesObj.values[i])
+        # print(self.list_of_param_name)
 
         # for index in self.parsed_xml.index:
         #     self.list_of_param_name.append(self.parsed_xml['name'][index])
 
 
         # print(self.list_of_param_name) # need to rework the bottom parser....!
+        for index, row in self.parsed_xml.iterrows():
+            if row['visualization'] == 'hidden':
+                print("hidden parameter!")
+            elif row['visualization'] == 'text':
+                widget = QLabel(row['name'])
+                self.grid.addWidget(widget, index, 1)
+                widget = QLineEdit(row['value'])
+                self.grid.addWidget(widget, index, 2)
+                self.grid.addWidget(QLabel(row['unit']), index, 3)
 
 
-        for i in range(len(self.list_of_param_name)): # append here to list of widgets in order to access them by index
-            if "hidden" not in list(self.list_of_param_name[i].values()):     # check xml file for "name" value
-                widget = QLabel(self.list_of_param_name[i]['name'])
-                self.grid.addWidget(widget,i,1)
+        # time.sleep(100)
 
-            if "text" in list(self.list_of_param_name[i].values()):           # check xml file for "text" value
-                widget = QLineEdit(self.list_of_param_name[i]['value'])
-                self.list_of_widgets.append(widget)
-                self.grid.addWidget(widget,i,2)
-                widget = self.grid.addWidget(QLabel(self.list_of_param_name[i]['unit']),i,3) # [third column]
 
-            if "chkbox" in list(self.list_of_param_name[i].values()):         # check xml file for "chkbox" value
-                widget = QCheckBox()
-                if '1' in list(self.list_of_param_name[i].values()):
-                    widget.setChecked(True)
-                self.grid.addWidget(widget,i,2)
-                self.list_of_widgets.append(widget)
 
-            if "dropdown" in list(self.list_of_param_name[i].values()):       # check xml file for "dropdown" value
-                widget = QComboBox()
-                self.grid.addWidget(widget,i,2)
-                self.list_of_widgets.append(widget)
 
-            try:                                                           #
-                x = list(root[i].attrib.values())
-                print(x)
-                if "dropdown" in x:
-                    dropdown_elements = []
-                    for e in range(16):
-                        try:
-                            if "name" in list(root[i][e].attrib):
-                                tmp = list(root[i][e].attrib.values())
-                                dropdown_elements.append(tmp[0])
-                        except Exception as e:
-                            pass
-                    for element in dropdown_elements:
-                        widget.addItem(element)
-            except Exception as e:
-                print(e)
-            else:
-                pass
+
+        # for i in range(len(self.list_of_param_name)): # old parser
+        #     if "hidden" not in list(self.list_of_param_name[i].values()):     # check xml file for "name" value
+        #         widget = QLabel(self.list_of_param_name[i]['name'])
+        #         self.grid.addWidget(widget,i,1)
+        #
+        #     if "text" in list(self.list_of_param_name[i].values()):           # check xml file for "text" value
+        #         widget = QLineEdit(self.list_of_param_name[i]['value'])
+        #         self.list_of_widgets.append(widget)
+        #         self.grid.addWidget(widget,i,2)
+        #         widget = self.grid.addWidget(QLabel(self.list_of_param_name[i]['unit']),i,3) # [third column]
+        #
+        #     if "chkbox" in list(self.list_of_param_name[i].values()):         # check xml file for "chkbox" value
+        #         widget = QCheckBox()
+        #         if '1' in list(self.list_of_param_name[i].values()):
+        #             widget.setChecked(True)
+        #         self.grid.addWidget(widget,i,2)
+        #         self.list_of_widgets.append(widget)
+        #
+        #     if "dropdown" in list(self.list_of_param_name[i].values()):       # check xml file for "dropdown" value
+        #         widget = QComboBox()
+        #         self.grid.addWidget(widget,i,2)
+        #         self.list_of_widgets.append(widget)
+        #
+        #     try:                                                           #
+        #         x = list(root[i].attrib.values())
+        #         # print(x)
+        #         if "dropdown" in x:
+        #             dropdown_elements = []
+        #             for e in range(16):
+        #                 try:
+        #                     if "name" in list(root[i][e].attrib):
+        #                         tmp = list(root[i][e].attrib.values())
+        #                         dropdown_elements.append(tmp[0])
+        #                 except Exception as e:
+        #                     pass
+        #             for element in dropdown_elements:
+        #                 widget.addItem(element)
+        #     except Exception as e:
+        #         print(e)
+        #     else:
+        #         pass
 
         write_button = QPushButton("Write")                     # append read/write buttons at the end
         read_button = QPushButton("Read")
@@ -507,7 +529,7 @@ class DeviceConfiguration(QWidget):
         self.grid.addWidget(read_button, 1000, 2)
         self.grid.addWidget(self.flash_combobox, 1000, 3)
         # self.grid.addWidget(QLabel("Flash"),14,3)
-        self.receive_hexfile()
+        # self.receive_hexfile()
 
 if __name__ == '__main__':
     open_main_window()

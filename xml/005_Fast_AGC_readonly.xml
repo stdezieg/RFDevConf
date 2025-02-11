@@ -63,7 +63,7 @@
     <reg adr="0D" bitmask="ff"/>
   </param>
 
-  <param name="Set Trigger Out" visualization="chkbox" value="0">
+  <param name="Set Trigger Out" visualization="hidden" value="0">
     <reg adr="12" bitmask="80"/>
   </param>
     
