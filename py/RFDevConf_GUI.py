@@ -37,14 +37,25 @@ def xml_to_dataframe(infile):
 
     for element in root.findall("./param[@name]"):
         for registers in element.findall(".//reg[@adr]"):
+            # print(registers.attrib.values())
             registers.attrib.update({'bit width':len(element.findall(".//reg[@adr]"))*8})
+            # print("debug: ",registers.attrib)
+            # print(element.findall(".//reg[@adr]"))
             if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
                 registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
             break
+
+        i = 0
+        for enumentry in element.findall(".//enumentry[@name]"):
+            i = i + 1
+            registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
+
         merged_dict = dict(element.attrib)
-        merged_dict.update(registers.attrib)                                             # concentrate sub and main dict
+        merged_dict.update(registers.attrib)
         df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
+
     # print(df)
+    print(df.to_string())
     return df
 
 def list_duplicates(seq):
@@ -455,17 +466,34 @@ class DeviceConfiguration(QWidget):
         # for index in self.parsed_xml.index:
         #     self.list_of_param_name.append(self.parsed_xml['name'][index])
 
-
-        # print(self.list_of_param_name) # need to rework the bottom parser....!
-        for index, row in self.parsed_xml.iterrows():
-            if row['visualization'] == 'hidden':
-                print("hidden parameter!")
-            elif row['visualization'] == 'text':
-                widget = QLabel(row['name'])
-                self.grid.addWidget(widget, index, 1)
-                widget = QLineEdit(row['value'])
-                self.grid.addWidget(widget, index, 2)
-                self.grid.addWidget(QLabel(row['unit']), index, 3)
+        try:
+            # print(self.list_of_param_name) # need to rework the bottom parser....!
+            for i, row in self.parsed_xml.iterrows():
+                if row['visualization'] == 'hidden':
+                    print("hidden parameter!")
+                elif row['visualization'] == 'text':
+                    widget = QLabel(row['name'])
+                    self.grid.addWidget(widget, i, 1)
+                    widget = QLineEdit(row['value'])
+                    self.grid.addWidget(widget, i, 2)
+                    self.grid.addWidget(QLabel(row['unit']), i, 3)
+                elif row['visualization'] == 'chkbox':
+                    widget = QLabel(row['name'])
+                    self.grid.addWidget(widget, i, 1)
+                    widget = QCheckBox()
+                    if '1' in row['value']:
+                        widget.setChecked(True)
+                    self.grid.addWidget(widget, i, 2)
+                    # self.list_of_widgets.append(widget)
+                elif row['visualization'] == 'dropdown':
+                    widget = QLabel(row['name'])
+                    self.grid.addWidget(widget, i, 1)
+                    widget = QComboBox()
+                    self.grid.addWidget(widget,i,2)
+                    for i in range(len(self.parsed_xml.columns)-9):
+                        widget.addItem(row[9+i])
+        except Exception as e:
+            print(e)
 
 
         # time.sleep(100)

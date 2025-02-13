@@ -10,13 +10,23 @@ def xml_to_dataframe(infile):
 
     for element in root.findall("./param[@name]"):
         for registers in element.findall(".//reg[@adr]"):
+            # print(registers.attrib.values())
             registers.attrib.update({'bit width':len(element.findall(".//reg[@adr]"))*8})
+            # print("debug: ",registers.attrib)
+            # print(element.findall(".//reg[@adr]"))
             if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
                 registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
             break
+
+        i = 0
+        for enumentry in element.findall(".//enumentry[@name]"):
+            i = i + 1
+            registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
+
         merged_dict = dict(element.attrib)
-        merged_dict.update(registers.attrib)                                             # concentrate sub and main dict
+        merged_dict.update(registers.attrib)
         df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
+
     # print(df)
     print(df.to_string())
     return df
