@@ -395,6 +395,34 @@ class DeviceConfiguration(QWidget):
 
         data_in = ''.join(data_in)
         data_in = data_in[:52]
+
+
+        for i, row in self.parsed_xml.iterrows():
+            # print(data_in)
+            # print(row['bit width'])
+            data_in_cut = data_in[0:(row['bit width'])//4]
+            # print(data_in_cut)
+            data_in = data_in[(row['bit width'])//4:] # darf nur passieren wenn maske = ff... sonst data loss
+            # print(data_in)
+
+            # if self.parsed_xml['adr'].duplicated().any():
+            #      print("found duplicate!")
+
+        duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
+        print(duplicates)
+
+        # print(self.parsed_xml[self.parsed_xml.index.duplicated(keep=False)])
+
+                                # print("test debug:", self.parsed_xml.index)
+                # print(self.parsed_xml.index[self.parsed_xml['adr']].tolist())
+        # print(len(self.parsed_xml))
+        # check for addr -> check for bitmask (duplicates) -> update widget
+
+        # pseudocode für read -> fill widgets
+        # 1. take address i -> check for duplicates -> get indexes of duplicates
+
+
+
                                                                                     # this is how to update field qlineedit
         self.list_of_widgets[0].setText(str(int(data_in[:4], 16)))                  # desired value ch1
         self.list_of_widgets[2].setText(str(int(data_in[4:8], 16)))                 # desired value ch2
@@ -455,14 +483,14 @@ class DeviceConfiguration(QWidget):
             self.list_of_reg_adr.append(element.attrib)
 
         self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
+
         # print(self.parsed_xml)
-        columnSeriesObj = self.parsed_xml['name']
-        for i in range(len(columnSeriesObj.values)):
-            print(columnSeriesObj.values[i])
-        columnSeriesObj = self.parsed_xml['visualization']
+        # columnSeriesObj = self.parsed_xml['name']
+        # for i in range(len(columnSeriesObj.values)):
+        #     print(columnSeriesObj.values[i])
+        # columnSeriesObj = self.parsed_xml['visualization']
             # self.list_of_param_name.append(columnSeriesObj.values[i])
         # print(self.list_of_param_name)
-
         # for index in self.parsed_xml.index:
         #     self.list_of_param_name.append(self.parsed_xml['name'][index])
 
