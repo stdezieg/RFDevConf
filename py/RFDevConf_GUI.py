@@ -38,11 +38,11 @@ def xml_to_dataframe(infile):
     for element in root.findall("./param[@name]"):
         for registers in element.findall(".//reg[@adr]"):
             # print(registers.attrib.values())
-            registers.attrib.update({'bit width':len(element.findall(".//reg[@adr]"))*8})
+            registers.attrib.update({'bit width':len(registers.attrib['bitmask'])*4})
             # print("debug: ",registers.attrib)
             # print(element.findall(".//reg[@adr]"))
-            if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
-                registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
+            # if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
+            #     registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
             break
 
         i = 0
@@ -54,7 +54,7 @@ def xml_to_dataframe(infile):
         merged_dict.update(registers.attrib)
         df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
 
-    # print(df)
+    df = df.fillna('')
     print(df.to_string())
     return df
 
@@ -396,23 +396,76 @@ class DeviceConfiguration(QWidget):
         data_in = ''.join(data_in)
         data_in = data_in[:52]
 
+        # print(len(self.list_of_widgets))
+        # print(self.list_of_widgets)
+        max_addr = 0
 
-        for i, row in self.parsed_xml.iterrows():
-            # print(data_in)
-            # print(row['bit width'])
-            data_in_cut = data_in[0:(row['bit width'])//4]
-            # print(data_in_cut)
-            data_in = data_in[(row['bit width'])//4:] # darf nur passieren wenn maske = ff... sonst data loss
-            # print(data_in)
+        for i in range(len(self.parsed_xml)):
+            if max_addr < int(self.parsed_xml['adr'][i], 16):
+                max_addr = int(self.parsed_xml['adr'][i], 16)
 
-            # if self.parsed_xml['adr'].duplicated().any():
-            #      print("found duplicate!")
+        print("max_addr is: ", max_addr)
 
-        duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
-        print(duplicates)
+        i = 0
+        addr = 0
+        while True:
+            if addr == int(self.parsed_xml['adr'][i], 16):
+                if "ff" not in self.parsed_xml['bitmask'][i]:
+                    duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
+                    print(duplicates.to_string())
+                    print("processing duplicates with their bitmask...")
+
+                else:
+                    print(addr)
+
+
+                addr = addr + len(self.parsed_xml['bitmask'][i])//4
+                i = 0
+            else:
+                i = i + 1
+
+            if addr == max_addr:
+                print("reached max address... exiting looop")
+                break
+
+
+
+
+            # data_in_cut = data_in[0:(i['bit width'])//4]
+            # # if (row['bit width'])
+            # if "ff" not in i['bitmask']:
+            #     # print("hey!")
+            #     duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
+            #     print(duplicates.to_string())
+            #     # print(data_in_cut)
+            # else:
+            #     if i['visualization'] == "text":
+            #         self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
+            #
+            #     elif i['visualization'] == "dropdown":
+            #         print("dropdown!")
+            #         print(data_in_cut)
+            #
+            #
+            #         # self.list_of_widgets[]
+            #
+            #     elif i['visualization'] == "chkbox":
+            #         print("checkbox!")
+            #         print(data_in_cut)
+            #
+            # data_in = data_in[(i['bit width'])//4:]
+
+
+
+        # duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
+        # print(duplicates.to_string())
+        # sum = 0
+        # for i in range(len(duplicates)):
+        #     # print("iloc: ", duplicates.iloc[i]['bitmask'])
+        #     sum += int(duplicates.iloc[i]['bitmask'], 16)
+        #     print(sum)
 
         # print(self.parsed_xml[self.parsed_xml.index.duplicated(keep=False)])
-
                                 # print("test debug:", self.parsed_xml.index)
                 # print(self.parsed_xml.index[self.parsed_xml['adr']].tolist())
         # print(len(self.parsed_xml))
@@ -420,8 +473,6 @@ class DeviceConfiguration(QWidget):
 
         # pseudocode für read -> fill widgets
         # 1. take address i -> check for duplicates -> get indexes of duplicates
-
-
 
                                                                                     # this is how to update field qlineedit
         self.list_of_widgets[0].setText(str(int(data_in[:4], 16)))                  # desired value ch1
@@ -503,6 +554,7 @@ class DeviceConfiguration(QWidget):
                     widget = QLabel(row['name'])
                     self.grid.addWidget(widget, i, 1)
                     widget = QLineEdit(row['value'])
+                    self.list_of_widgets.append(widget)
                     self.grid.addWidget(widget, i, 2)
                     self.grid.addWidget(QLabel(row['unit']), i, 3)
                 elif row['visualization'] == 'chkbox':
@@ -512,12 +564,14 @@ class DeviceConfiguration(QWidget):
                     if '1' in row['value']:
                         widget.setChecked(True)
                     self.grid.addWidget(widget, i, 2)
+                    self.list_of_widgets.append(widget)
                     # self.list_of_widgets.append(widget)
                 elif row['visualization'] == 'dropdown':
                     widget = QLabel(row['name'])
                     self.grid.addWidget(widget, i, 1)
                     widget = QComboBox()
                     self.grid.addWidget(widget,i,2)
+                    self.list_of_widgets.append(widget)
                     for i in range(len(self.parsed_xml.columns)-9):
                         widget.addItem(row[9+i])
         except Exception as e:
