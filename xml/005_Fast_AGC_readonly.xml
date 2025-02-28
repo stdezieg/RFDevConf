@@ -8,11 +8,11 @@
   </param>
 
   <param name="Actual Value Channel 1" unit="" scalefactor="1" offset="0" visualization="text" value="50">
-    <reg adr="01" bitmask="ffff"/>
+    <reg adr="02" bitmask="ffff"/>
   </param>
 
   <param name="Desired Value Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="50">
-    <reg adr="02" bitmask="ffff"/>
+    <reg adr="01" bitmask="ffff"/>
   </param>
 
   <param name="Actual Value Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="50">
@@ -24,11 +24,11 @@
   </param>
 
   <param name="Actual Gain Channel 1" unit="" scalefactor="1" offset="0" visualization="text" value="03">
-    <reg adr="05" bitmask="00ff"/>
+    <reg adr="06" bitmask="00ff"/>
   </param>
 
   <param name="Manual Gain Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="04">
-    <reg adr="06" bitmask="00ff"/>
+    <reg adr="05" bitmask="00ff"/>
   </param>
 
   <param name="Actual Gain Channel 2" unit="" scalefactor="1" offset="0" visualization="text" value="05">
@@ -38,13 +38,13 @@
   <param name="Mode Channel 1" visualization="dropdown" value="1">
     <enumentry name="Auto" value="0"/>
     <enumentry name="Manual" value="1"/>
-    <reg adr="08" bitmask="0004"/>
+    <reg adr="0B" bitmask="0004"/>
   </param>
   
   <param name="Mode Channel 2" visualization="dropdown" value="1">
     <enumentry name="Auto" value="0"/>
     <enumentry name="Manual" value="1"/>
-    <reg adr="08" bitmask="0002"/>
+    <reg adr="0B" bitmask="0002"/>
   </param>
   
   <param name="Update Rate" unit="CLKs" scalefactor="50" offset="0" visualization="text" value="33">
@@ -52,11 +52,11 @@
   </param>
 
   <param name="Amplitude Window" unit="" scalefactor="1" offset="0" visualization="text" value="1">
-    <reg adr="0B" bitmask="ffff"/>
+    <reg adr="08" bitmask="ffff"/>
   </param>
 
   <param name="Set Trigger Out" visualization="chkbox" value="0">
-    <reg adr="08" bitmask="0080"/>
+    <reg adr="0B" bitmask="0080"/>
   </param>
     
 </unit>

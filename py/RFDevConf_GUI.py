@@ -12,7 +12,6 @@ import RFDevConf
 from bitstring import BitArray
 import pandas as pd
 
-
 def formatRegDiscription(MemAddress, MemContent16bitHex):
     # convert address from integer to 4 hexadecimal digits (i.e. 16 bit)
     hexAddress = format(MemAddress,'08x')[-4:]
@@ -30,32 +29,63 @@ def formatRegDiscription(MemAddress, MemContent16bitHex):
 def get_indices(element, lst):
     return [i for i in range(len(lst)) if lst[i] == element]
 
+# def xml_to_dataframe(infile):
+#     df = pd.DataFrame()
+#     tree = ET.parse(infile)
+#     root = tree.getroot()
+
+    # for element in root.findall("./param[@name]"):
+    #     merged_dict = dict(element.attrib)
+    #     merged_dict_list = list(merged_dict.items())
+    #     # print(merged_dict_list)
+    #     for registers in element.findall(".//reg[@adr]"):
+    #         merged_dict.update(registers.attrib)
+    #         merged_dict_list.append(list(registers.attrib.items()))
+    #         # merged_dict_list
+    #         # print(merged_dict_list)
+    #     i = 0
+    #     for enumentry in element.findall(".//enumentry[@name]"):
+    #         i = i + 1
+    #         # registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
+    #         merged_dict.update({"ddown" + str(i):enumentry.attrib['name']})
+    #
+    #         # tmp_dict = registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
+    #         merged_dict_list.append(list(registers.attrib.items()))
+    #         # merged_dict_list.append(list(tmp_dict))
+    #
+    #     # print(merged_dict_list)
+    #     new_dict = dict(merged_dict_list)
+    #     print(new_dict)
+    #     # print(merged_dict)
+    #     df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
+    #     # df = pd.concat([df, pd.DataFrame([new_dict])], ignore_index=True)             # add dictionary to dataframe
+    #
+    # df = df.fillna('')
+    # # print(df.to_string())
+    # return df
+
 def xml_to_dataframe(infile):
     df = pd.DataFrame()
     tree = ET.parse(infile)
     root = tree.getroot()
 
-    for element in root.findall("./param[@name]"):
-        for registers in element.findall(".//reg[@adr]"):
-            # print(registers.attrib.values())
-            registers.attrib.update({'bit width':len(registers.attrib['bitmask'])*4})
-            # print("debug: ",registers.attrib)
-            # print(element.findall(".//reg[@adr]"))
-            # if len(registers.attrib['bitmask']) < registers.attrib['bit width']//4:      # update bitmask to correct length
-            #     registers.attrib.update({'bitmask':registers.attrib['bitmask']*int(registers.attrib['bit width']//8)})
+    for element in root.findall("./param[@name]"): # parse xml by <param name
+        for registers in element.findall(".//reg[@adr]"): # parse xml by <reg adr
+            registers.attrib.update({'bit width':len(registers.attrib['bitmask'])*4}) # add bit width of widget to dict
             break
-
         i = 0
-        for enumentry in element.findall(".//enumentry[@name]"):
+        for enumentry in element.findall(".//enumentry[@name]"): # parse xml by <enumentry name
             i = i + 1
-            registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
+            registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']}) # add dropdown options to dict
 
         merged_dict = dict(element.attrib)
         merged_dict.update(registers.attrib)
-        df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
+        # print(merged_dict)
+        df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)   # transform to dataframe
 
     df = df.fillna('')
     print(df.to_string())
+    # df.to_csv("dataframe.csv", sep=';')
     return df
 
 def list_duplicates(seq):
@@ -396,8 +426,6 @@ class DeviceConfiguration(QWidget):
         data_in = ''.join(data_in)
         data_in = data_in[:52]
 
-        # print(len(self.list_of_widgets))
-        # print(self.list_of_widgets)
         max_addr = 0
 
         for i in range(len(self.parsed_xml)):
@@ -408,27 +436,54 @@ class DeviceConfiguration(QWidget):
 
         i = 0
         addr = 0
+        print(data_in)
         while True:
+            data_in_cut = data_in[0:(self.parsed_xml['bit width'][i])//4]
             if addr == int(self.parsed_xml['adr'][i], 16):
+                # print(addr, ":", data_in_cut)
                 if "ff" not in self.parsed_xml['bitmask'][i]:
                     duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
-                    print(duplicates.to_string())
-                    print("processing duplicates with their bitmask...")
+                    if self.parsed_xml['visualization'][i] == 'dropdown':
+                        # print(data_in_cut)
+                        # problem: nehme werte aus XML, eigentlich will ich aus data_in_cut
+                        # print(int(self.parsed_xml['value'][i]))
+                        self.list_of_widgets[i].setCurrentIndex(int(self.parsed_xml['value'][i]))
 
+                        print(duplicates)
+
+                        for i in range(len(duplicates)):
+                            hex_mask = duplicates['bitmask'].iloc[i]
+                            hex_data = data_in_cut
+                            bin_mask = bin(int(hex_mask, 16))[2:].zfill(16)
+                            bin_data = bin(int(hex_data, 16))[2:].zfill(16)
+                            print(bin_mask)
+                            print(bin_data)
+
+                            self.list_of_widgets[i].setCurrentIndex(bin)
+
+                            # pseudocode
+                            # 1. get index of active bits in bitmask
+                            # 2. loop
+
+                        pass
                 else:
-                    print(addr)
+                    if self.parsed_xml['visualization'][i] == 'text':
+                        self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
+                        data_in = data_in[(self.parsed_xml['bit width'][i])//4:]
 
-
-                addr = addr + len(self.parsed_xml['bitmask'][i])//4
+                if addr == max_addr:
+                    break
+                else:
+                    addr = addr + len(self.parsed_xml['bitmask'][i])//4
+                    # print(addr)
                 i = 0
+
+            # elif addr == max_addr:
+            #     print("reached max address... exiting looop")
+            #     break
+
             else:
                 i = i + 1
-
-            if addr == max_addr:
-                print("reached max address... exiting looop")
-                break
-
-
 
 
             # data_in_cut = data_in[0:(i['bit width'])//4]
@@ -475,38 +530,39 @@ class DeviceConfiguration(QWidget):
         # 1. take address i -> check for duplicates -> get indexes of duplicates
 
                                                                                     # this is how to update field qlineedit
-        self.list_of_widgets[0].setText(str(int(data_in[:4], 16)))                  # desired value ch1
-        self.list_of_widgets[2].setText(str(int(data_in[4:8], 16)))                 # desired value ch2
-        self.list_of_widgets[1].setText(str(int(data_in[8:12], 16)))                # actual value ch1
-        self.list_of_widgets[3].setText(str(int(data_in[12:16], 16)))               # actual value ch2
-        self.list_of_widgets[4].setText(str(int(data_in[18:20], 16)))               # manual gain ch1
-        self.list_of_widgets[6].setText(str(int(data_in[22:24], 16)))               # manual gain ch2
-        self.list_of_widgets[7].setText(str(int(data_in[26:28], 16)))               # actual gain ch2
-        self.list_of_widgets[5].setText(str(int(data_in[30:32], 16)))               # actual gain ch1
-        self.list_of_widgets[11].setText(str(int(data_in[32:36], 16)))              # amp_window
-        self.list_of_widgets[10].setText(str(int(data_in[36:44], 16) // 50))        # update rate
+        # self.list_of_widgets[0].setText(str(int(data_in[:4], 16)))                  # desired value ch1
+        # self.list_of_widgets[2].setText(str(int(data_in[4:8], 16)))                 # desired value ch2
+        # self.list_of_widgets[1].setText(str(int(data_in[8:12], 16)))                # actual value ch1
+        # self.list_of_widgets[3].setText(str(int(data_in[12:16], 16)))               # actual value ch2
+        # self.list_of_widgets[4].setText(str(int(data_in[18:20], 16)))               # manual gain ch1
+        # self.list_of_widgets[6].setText(str(int(data_in[22:24], 16)))               # manual gain ch2
+        # self.list_of_widgets[7].setText(str(int(data_in[26:28], 16)))               # actual gain ch2
+        # self.list_of_widgets[5].setText(str(int(data_in[30:32], 16)))               # actual gain ch1
+        # self.list_of_widgets[11].setText(str(int(data_in[32:36], 16)))              # amp_window
+        # self.list_of_widgets[10].setText(str(int(data_in[36:44], 16) // 50))        # update rate
 
-        bin_tmp = "{:08b}".format(int(data_in[48:52], 16)) # addr 12
+        # bin_tmp = "{:08b}".format(int(data_in[48:52], 16)) # addr 12
 
-        try:
-            if bin_tmp[0] == '1':
-                self.list_of_widgets[13].setChecked(True)
-            else:
-                self.list_of_widgets[13].setChecked(False)
-            if bin_tmp[5] == '1':
-                self.list_of_widgets[8].setCurrentIndex(1)
-            else:
-                self.list_of_widgets[8].setCurrentIndex(0)
-            if bin_tmp[6] == '1':
-                self.list_of_widgets[9].setCurrentIndex(1)
-            else:
-                self.list_of_widgets[9].setCurrentIndex(0)
-            if bin_tmp[7] == '1': # 12
-                self.list_of_widgets[12].setChecked(True)
-            else:
-                self.list_of_widgets[12].setChecked(False)
-        except Exception as e:
-            print(e)
+        # try:
+        #     bin_tmp = "{:08b}".format(int(data_in[48:52], 16)) # addr 12
+        #     if bin_tmp[0] == '1':
+        #         self.list_of_widgets[13].setChecked(True)
+        #     else:
+        #         self.list_of_widgets[13].setChecked(False)
+        #     if bin_tmp[5] == '1':
+        #         self.list_of_widgets[8].setCurrentIndex(1)
+        #     else:
+        #         self.list_of_widgets[8].setCurrentIndex(0)
+        #     if bin_tmp[6] == '1':
+        #         self.list_of_widgets[9].setCurrentIndex(1)
+        #     else:
+        #         self.list_of_widgets[9].setCurrentIndex(0)
+        #     if bin_tmp[7] == '1': # 12
+        #         self.list_of_widgets[12].setChecked(True)
+        #     else:
+        #         self.list_of_widgets[12].setChecked(False)
+        # except Exception as e:
+        #     print(e)
 
 
     def make_form(self, input_xml):
