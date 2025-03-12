@@ -733,12 +733,15 @@ class DeviceConfiguration(QWidget):
             tmp_df['value'] = []
             print(tmp_df)
             for i in range(len(self.reg_df)):
-                tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': data_in[:4]}
+                tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': int(data_in[:4], 16)}
                 data_in = data_in[4:]
             print(tmp_df)
         except Exception as e:
             print(e)
 
+        self.reg_df = tmp_df
+        self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
+        print(self.wid_df.to_string())
         self.update_widgets()
 
 
@@ -760,11 +763,8 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                         self.grid.addWidget(widget, i, 2)
                     else:
-                        # for i in range(int(row['regcnt'])):
-                        #     print("adr" + str(i+1))
+                        self.list_of_widgets[i].setText(str(row['value']))
 
-                        # self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
-                        pass
                 elif row['visualization'] == 'chkbox':
                     if self.gui_init == 0:
                         widget = QLabel(row['name'])
@@ -832,10 +832,10 @@ class DeviceConfiguration(QWidget):
 
         self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
         # print(self.parsed_xml.to_string())
-        print(self.wid_df.to_string())
-        reg_data = RFDevConf_Reg_Data()
-        self.reg_df = reg_data.DataFrame2Reg(self.wid_df, False)
-        print(self.reg_df)
+        # print(self.wid_df.to_string())
+        self.reg_data = RFDevConf_Reg_Data()
+        self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
+        # print(self.reg_df)
 
         self.gui_init = 0
 
