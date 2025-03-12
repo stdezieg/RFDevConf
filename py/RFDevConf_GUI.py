@@ -174,9 +174,12 @@ class RFDevConf_Reg_Data:
 
         def add_reg(self,addr, bitmask, reg_value=0):
             if addr != '':
-                self.reg_adrr_list.append(addr)
-                self.bit_mask_list.append(self.hex2int(bitmask))
-                self.reg_value_list.append(reg_value)
+                # self.reg_adrr_list.append(addr)
+                # self.bit_mask_list.append(self.hex2int(bitmask))
+                # self.reg_value_list.append(reg_value)
+                self.bit_mask_list.insert(0, self.hex2int(bitmask))
+                self.reg_adrr_list.insert(0, addr)
+                self.reg_value_list.insert(0, reg_value)
 
         def ones_in_bit_mask(self):
             counter=0
@@ -718,13 +721,6 @@ class DeviceConfiguration(QWidget):
 
         data_in = ''.join(data_in)
         data_in = data_in[:52]
-
-        # max_addr = 0
-        #
-        # for i in range(len(self.parsed_xml)):
-        #     if max_addr < int(self.parsed_xml['adr'][i], 16):
-        #         max_addr = int(self.parsed_xml['adr'][i], 16)
-
         print(data_in)
 
         try:
