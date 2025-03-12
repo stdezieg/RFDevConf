@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import RFDevConf
 from bitstring import BitArray
 import pandas as pd
+import xmltodict
 
 def formatRegDiscription(MemAddress, MemContent16bitHex):
     # convert address from integer to 4 hexadecimal digits (i.e. 16 bit)
@@ -28,6 +29,297 @@ def formatRegDiscription(MemAddress, MemContent16bitHex):
 
 def get_indices(element, lst):
     return [i for i in range(len(lst)) if lst[i] == element]
+
+def print_dict(dictionary, indent=2):
+    if isinstance(dictionary, dict):  # Überprüfen, ob es sich um ein Dictionary handelt
+        for key, value in dictionary.items():
+            print('  ' * indent + str(key) + ':', end='')
+            if isinstance(value, dict):
+                print()
+                print_dict(value, indent + 1)
+            elif isinstance(value, list):  # Falls der Wert eine Liste ist
+                print()
+                print_list(value, indent + 1)
+            else:
+                print(' ' + str(value))
+    else:
+        raise TypeError("Das übergebene Objekt ist kein Dictionary.")
+
+def print_list(lst, indent=2):
+    for item in lst:
+        if isinstance(item, dict):  # Falls das Listenelement ein Dictionary ist
+            print('  ' * indent + '- (Dictionary):')
+            print_dict(item, indent + 1)
+        elif isinstance(item, list):  # Falls das Listenelement eine Liste ist
+            print('  ' * indent + '- (List):')
+            print_list(item, indent + 1)
+        else:  # Falls das Listenelement ein einfacher Wert ist
+            print('  ' * indent + '- ' + str(item))
+
+
+def xml_to_dataframe_xml2dict(infile):
+    df = pd.DataFrame()
+
+    with open(infile, 'r') as file:
+        xml_inhalt = file.read()
+    xmldict = xmltodict.parse(xml_inhalt, attr_prefix='')
+
+    elem_cnt = 0
+    for element in xmldict["unit"]["param"] :
+        DF_dict = {} # clear DF_dict
+        #Mandetory atributes
+        DF_dict["name"]          = element["name"]
+        DF_dict["visualization"] = element["visualization"]
+        DF_dict["value"]         = element["value"]
+
+        #optional atributes
+        if 'unit'          in element.keys(): DF_dict["unit"]          = element["unit"]
+        if 'scalefactor'   in element.keys(): DF_dict["scalefactor"]   = element["scalefactor"]
+        if 'offset'        in element.keys(): DF_dict["offset"]        = element["offset"]
+
+        #complex atributes: Register entrys
+        if isinstance(element["reg"], dict): # single entry
+            DF_dict["adr1"]     = element["reg"]["adr"]
+            DF_dict["bitmask1"] = element["reg"]["bitmask"]
+            DF_dict["regcnt"] = str(int(1))
+        elif isinstance(element["reg"], list): # multi entry
+            i=1
+            for elem in element["reg"]:
+                DF_dict["adr"+str(i)]     = elem["adr"]
+                DF_dict["bitmask"+str(i)] = elem["bitmask"]
+                i+=1
+            DF_dict["regcnt"] = str(int(i-1))
+        else:
+            print("ERROR")
+
+        #complex atributes: enumentry for drop down
+        if 'enumentry' in element.keys():
+            if isinstance(element["enumentry"], dict): # single entry
+                DF_dict["ddown1"]     = element["enumentry"]["name"]
+                DF_dict["ddvalue1"] = element["enumentry"]["value"]
+                DF_dict["ddcnt"] = str(int(1))
+            elif isinstance(element["enumentry"], list): # multi entry
+                i=1
+                for elem in element["enumentry"]:
+                    DF_dict["ddown"+str(i)]     = elem["name"]
+                    DF_dict["ddvalue"+str(i)] = elem["value"]
+                    i+=1
+                DF_dict["ddcnt"] = str(int(i-1))
+            else:
+                print("ERROR")
+        df = pd.concat([df, pd.DataFrame([DF_dict])], ignore_index=True)   # transform to dataframe
+        elem_cnt += 1
+
+    # re order colums in Data frame
+    cols = df.columns # get collums of Data frame
+    adr_and_mask_list = [x for x in cols if "adr" in x or "bitmask" in x] #get all entrys relatet to addres or bitmask
+    dd_list = [x for x in cols if "dd" in x] # get all entrys related to drop down menues
+    new_cols = [x for x in cols if x not in adr_and_mask_list and x not in dd_list] #get su list without the elements from the other lists
+    new_cols = new_cols+adr_and_mask_list+dd_list # fuse all together again
+    df = df.reindex(columns=new_cols) # perform new order
+
+    df = df.fillna('')
+    # df.to_csv("dataframe_MH.csv", sep=';')
+    return df
+
+
+class RFDevConf_Reg_Data:
+
+    class ReBiCo: # register and Bitmask Container
+        def __init__(self):
+            self.reg_adrr_list = [] # corresponding reg addr as int
+            self.bit_mask_list = [] # bit mask as int value
+            self.reg_value_list = [] # resulting value distributen to Bits in multiple registers
+            self.wordsize = 16
+
+        def merge_value(self,old_value,list_id):
+            mask = self.bit_mask_list[list_id]
+            merged_value = (old_value & ~mask) | (self.reg_value_list[list_id] & mask)
+            return merged_value
+
+        def re_distribute_value(self):
+            value = int(0) #resulting value
+            bit_position = 0 # bit pos in the resulting value
+
+            for current_reg in range(len(self.reg_adrr_list)):
+                mask = copy.deepcopy(self.bit_mask_list[current_reg]) #to be shure that the origin is untuched
+                reg_value = int(self.reg_value_list[current_reg])
+                shift = 0
+                while mask: # loop until there are no more ones in the mask
+                    if mask & 1:  # if the lowest bit in the mask shall be used (is 1)
+                        if reg_value & (1 << shift):
+                            value |= (1 << bit_position)
+                        bit_position += 1 # one bit handled so go to next
+                    mask >>= 1 # one bit of mask handled so go to next
+                    shift += 1 # remember bit pos
+            return int(value)
+
+        def distribute_value(self, value):
+            ones_cnt = self.ones_in_bit_mask() #how many bits are
+            combined_Bit_Mask = 2**(ones_cnt)-1
+            value = value & combined_Bit_Mask # shrink the value to the actual bitmask
+            for current_reg_id in range(len(self.reg_adrr_list)): # go thrue all registers that are part of that value
+                mask = copy.deepcopy(self.bit_mask_list[current_reg_id]) # get real copy of mask to be shure that the origin is untuched
+                shift = 0 # each register start with shift 0
+
+                while mask: # loop until there are no more ones in the mask
+                    if mask & 1: # if the lowest bit in the mask shall be used (is 1)
+                        if value & 1: # if the value has a one at the current position
+                            self.reg_value_list[current_reg_id] |= (1 << shift) # set the  coresponding 1 in the reg value
+                        value >>= 1 # go to next bit of value
+                    mask >>= 1 # go to next bit of mask
+                    shift += 1 # remember shift positon for this register
+
+
+        def add_reg(self,addr, bitmask, reg_value=0):
+            if addr != '':
+                self.reg_adrr_list.append(addr)
+                self.bit_mask_list.append(self.hex2int(bitmask))
+                self.reg_value_list.append(reg_value)
+
+        def ones_in_bit_mask(self):
+            counter=0
+            for elem in self.bit_mask_list:
+                counter += bin(elem).count('1')
+            return counter
+
+        def hex2bin(self,hex_string):
+            return bin(int.from_bytes(bytes.fromhex(str(hex_string)), byteorder='big'))[2:]
+
+        def hex2int(self,hex_string):
+            try:
+                # remove leading '0x' oder '0X', if exist
+                return int(hex_string, 16)
+            except ValueError:
+                raise ValueError(f"Ungültiger Hex-String: {hex_string}")
+
+
+    def __init__(self):
+        self.wid_dict = {}
+        self.reg_dict = {}
+        self.already_build_reg_list = False
+
+    def hex2int(self, hex_string):
+        try:
+            # remove leading '0x' oder '0X', if it exist
+            return int(hex_string, 16)
+        except ValueError:
+            raise ValueError(f"Ungültiger Hex-String: {hex_string}")
+
+    def int2hex(self, int_value):
+        return hex(int(int_value))[2:]
+
+    def get_reg_dict_as_df(self, c_e= False):
+        proto_df=[]
+        for reg in self.reg_dict.keys():
+            adr   = self.int2hex(reg)
+            value = self.reg_dict[reg]
+            new_dict = {"adr": adr, "value":value}
+            if c_e:
+                new_dict["bitmask"] = "FFFF"
+            proto_df.append(new_dict)
+        return pd.DataFrame(proto_df)
+
+
+    def build_register_list(self): # build a list of all appearing registers based on wid_dict
+        reg_addr_list = []
+        for elem in self.wid_dict : # go thrue all widgid entrys
+            i=1 #counter variable for multiple register entrys
+            while(True): #will break due to internal condition
+                key = "adr"+str(i)
+                if key in elem.keys() and elem[key] != '': # look if key exist for current Widgit and if it is filled
+                    reg_adr = self.hex2int(elem[key]) #register addres as int
+                    if not (reg_adr in reg_addr_list): # look if register was found already
+                        reg_addr_list.append(reg_adr) # add new entry in register list
+                else:
+                    break #entry des not exist so quit searching
+                i+=1 # increase counter for next register entry
+        reg_addr_list.sort()
+        return reg_addr_list
+
+    def val_of_dict(self,dict, key ,default=1): # retruns the value corresponding to the key if it exist in the dict , otherwise returns default value
+        if key in dict.keys():# check if key is iin list
+            value = dict[key] # get value
+            if value != '':   # chek if value is empty
+                return int(value) # if not empty retrun value
+        return default # key does not exist or value is empty so return default value
+
+    def set_reg_from_wid(self, wid={}):
+        #value = self.val_of_dict(wid,"value",0.0) * self.val_of_dict(wid,"scalefactor") + self.val_of_dict(wid,"offset",0.0)
+        value = self.val_of_dict(wid,"value",0)
+        my_ReBiCo = self.ReBiCo() #helper to handle bit distributen into register
+
+        i=1 #counter variable for multiple register entrys
+        look_for_last_reg_entry=1 # flag to terminate the while loop
+        while(look_for_last_reg_entry): #will break due to internal condition
+                addr_key = "adr"+str(i)
+                mask_key = "bitmask"+str(i)
+                if addr_key in wid.keys() and wid[addr_key] != '': # look if key exist for current Widgit and if it is filled
+                    reg_adr  = self.hex2int(wid[addr_key]) #register addres as int
+                    reg_mask = wid[mask_key] #register addres as int
+                    my_ReBiCo.add_reg(reg_adr,reg_mask)
+                else:
+                    look_for_last_reg_entry=0 #entry does not exist so quit searching
+                i+=1 # increase counter for next register entry
+
+
+        #merge value with register content
+        my_ReBiCo.distribute_value(value)# distribute value to tbits corresponding to mask
+        for i in range(len(my_ReBiCo.reg_adrr_list)): #merge all registers seperatly
+            addr     = my_ReBiCo.reg_adrr_list[i] # get the corresponding register address
+            old_value = self.reg_dict[addr] # get the old value for
+            self.reg_dict[addr] = my_ReBiCo.merge_value(old_value,i)# merge current value with the internal value for that register
+
+        #self.reg_dict[self.hex2int(wid["adr1"])] = value
+
+
+    def set_wid_from_reg(self, wid={}):
+        my_ReBiCo = self.ReBiCo() #helper to handle bit distributen into register
+
+        i=1 #counter variable for multiple register entrys
+        look_for_last_reg_entry=1 # flag to terminate the while loop
+        while(look_for_last_reg_entry): #will break due to internal condition
+                addr_key = "adr"+str(i)
+                mask_key = "bitmask"+str(i)
+                if addr_key in wid.keys() and wid[addr_key] != '': # look if key exist for current Widgit and if it is filled
+                    reg_adr   = self.hex2int(wid[addr_key]) #register addres as int
+                    reg_mask  = wid[mask_key] #register addres as int
+                    reg_value = self.reg_dict[reg_adr] #get value from local register
+                    my_ReBiCo.add_reg(reg_adr,reg_mask, reg_value) # add register with address bitmask and value in helper
+                else:
+                    look_for_last_reg_entry=0 #entry does not exist so quit searching
+                i+=1 # increase counter for next register entry
+        new_value = my_ReBiCo.re_distribute_value() # recombine value with respekt to bitmask and register distribution
+        return new_value # return new value for widgit
+
+
+
+    def DataFrame2Reg(self, wid_df, compatibility_extensions=False):
+        self.wid_dict = wid_df.to_dict("records") # create real dict from Pandas Data frame
+
+        # build a sortet list of used registers if it not was done before
+        if self.already_build_reg_list == False:
+            self.reg_dict.clear() # make shure the register list is free
+            for adr in self.build_register_list(): #create sortet list of used registers and iterate over them
+                self.reg_dict[adr] = 0 # create registers with defined start value (zero)
+
+        #go thrue all widigts and set corresponding bits in register map
+        for elem in self.wid_dict:
+            self.set_reg_from_wid(elem)
+
+        return self.get_reg_dict_as_df(compatibility_extensions)
+
+    def Reg2DataFrame(self,reg_df, compatibility_extensions=False):
+        input_dict = reg_df.to_dict("records") # transform input register into internal data structure
+        for elem in input_dict:
+            self.reg_dict[self.hex2int(elem["adr"])]= int(elem["value"])
+
+        for i in range(len(self.wid_dict)): # go thrue all widgeds
+            new_value = self.set_wid_from_reg(self.wid_dict[i]) # get value for widgit from internal registers
+            self.wid_dict[i]["value"]=int(new_value) #set new value into the current widget
+
+        return pd.DataFrame(self.wid_dict) #retrun resulting dict as pandas data frame
+
 
 # def xml_to_dataframe(infile):
 #     df = pd.DataFrame()
@@ -439,6 +731,7 @@ class DeviceConfiguration(QWidget):
         print(data_in)
         while True:
             data_in_cut = data_in[0:(self.parsed_xml['bit width'][i])//4]
+            # data_in_cut = data_in[0:(self.parsed_xml['bit width'][i])//4]
             if addr == int(self.parsed_xml['adr'][i], 16):
                 # print(addr, ":", data_in_cut)
                 if "ff" not in self.parsed_xml['bitmask'][i]:
@@ -458,6 +751,8 @@ class DeviceConfiguration(QWidget):
                             bin_data = bin(int(hex_data, 16))[2:].zfill(16)
                             print(bin_mask)
                             print(bin_data)
+                            print()
+                            print("------------------")
 
                             self.list_of_widgets[i].setCurrentIndex(bin)
 
@@ -589,7 +884,12 @@ class DeviceConfiguration(QWidget):
         for element in root.findall(".//reg[@adr]"):
             self.list_of_reg_adr.append(element.attrib)
 
-        self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
+        # self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
+        self.parsed_xml = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
+        print(self.parsed_xml.to_string())
+
+        # jetzt dataframe -> widgetframe mappen mit martins klasse!
+
 
         # print(self.parsed_xml)
         # columnSeriesObj = self.parsed_xml['name']
@@ -628,8 +928,9 @@ class DeviceConfiguration(QWidget):
                     widget = QComboBox()
                     self.grid.addWidget(widget,i,2)
                     self.list_of_widgets.append(widget)
-                    for i in range(len(self.parsed_xml.columns)-9):
-                        widget.addItem(row[9+i])
+                    print(row['ddcnt'])
+                    for i in range(int(row['ddcnt'])):
+                        widget.addItem(row['ddown'+str(i+1)])
         except Exception as e:
             print(e)
 
