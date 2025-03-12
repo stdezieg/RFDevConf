@@ -174,9 +174,6 @@ class RFDevConf_Reg_Data:
 
         def add_reg(self,addr, bitmask, reg_value=0):
             if addr != '':
-                # self.reg_adrr_list.append(addr)
-                # self.bit_mask_list.append(self.hex2int(bitmask))
-                # self.reg_value_list.append(reg_value)
                 self.bit_mask_list.insert(0, self.hex2int(bitmask))
                 self.reg_adrr_list.insert(0, addr)
                 self.reg_value_list.insert(0, reg_value)
@@ -742,10 +739,8 @@ class DeviceConfiguration(QWidget):
 
 
     def update_widgets(self):
-        print("gui init:", self.gui_init)
+        # print("gui init:", self.gui_init)
         try:
-            # duplicates = self.wid_df[self.wid_df['adr1'].duplicated(keep=False)]
-            # print(duplicates.to_string())
             for i, row in self.wid_df.iterrows():
 
                 if row['visualization'] == 'hidden':
@@ -766,18 +761,14 @@ class DeviceConfiguration(QWidget):
                         widget = QLabel(row['name'])
                         self.grid.addWidget(widget, i, 1)
                         widget = QCheckBox()
-                        # if '1' in row['value']:
-                        #     widget.setChecked(True)
                         self.grid.addWidget(widget, i, 2)
                         self.list_of_widgets.append(widget)
                     else:
-                        # if '1' in row['value']:
-                        #     widget.setChecked(True)
-                        # else:
-                        #     widget.setChecked(False)
-                        pass
+                        if '1' in str(row['value']):
+                            self.list_of_widgets[i].setChecked(True)
+                        elif '0' in str(row['value']):
+                            self.list_of_widgets[i].setChecked(False)
 
-                    # self.list_of_widgets.append(widget)
                 elif row['visualization'] == 'dropdown':
                     if self.gui_init == 0:
                         widget = QLabel(row['name'])
@@ -785,10 +776,10 @@ class DeviceConfiguration(QWidget):
                         widget = QComboBox()
                         self.grid.addWidget(widget,i,2)
                         self.list_of_widgets.append(widget)
-                        # print(row['ddcnt'])
                         for i in range(int(row['ddcnt'])):
                             widget.addItem(row['ddown'+str(i+1)])
                     else:
+                        self.list_of_widgets[i].setCurrentIndex(row['value'])
                         pass
             self.gui_init = 1
         except Exception as e:
