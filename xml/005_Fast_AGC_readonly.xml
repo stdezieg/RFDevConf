@@ -58,7 +58,6 @@
 
   <param name="Set Trigger Out" visualization="chkbox" value="0">
     <reg adr="0B" bitmask="0080"/>
-    <reg adr="0B" bitmask="0040"/>
   </param>
     
 </unit>

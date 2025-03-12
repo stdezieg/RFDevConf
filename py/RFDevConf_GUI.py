@@ -12,6 +12,7 @@ import RFDevConf
 from bitstring import BitArray
 import pandas as pd
 import xmltodict
+import copy
 
 def formatRegDiscription(MemAddress, MemContent16bitHex):
     # convert address from integer to 4 hexadecimal digits (i.e. 16 bit)
@@ -718,221 +719,179 @@ class DeviceConfiguration(QWidget):
         data_in = ''.join(data_in)
         data_in = data_in[:52]
 
-        max_addr = 0
+        # max_addr = 0
+        #
+        # for i in range(len(self.parsed_xml)):
+        #     if max_addr < int(self.parsed_xml['adr'][i], 16):
+        #         max_addr = int(self.parsed_xml['adr'][i], 16)
 
-        for i in range(len(self.parsed_xml)):
-            if max_addr < int(self.parsed_xml['adr'][i], 16):
-                max_addr = int(self.parsed_xml['adr'][i], 16)
-
-        print("max_addr is: ", max_addr)
-
-        i = 0
-        addr = 0
         print(data_in)
-        while True:
-            data_in_cut = data_in[0:(self.parsed_xml['bit width'][i])//4]
-            # data_in_cut = data_in[0:(self.parsed_xml['bit width'][i])//4]
-            if addr == int(self.parsed_xml['adr'][i], 16):
-                # print(addr, ":", data_in_cut)
-                if "ff" not in self.parsed_xml['bitmask'][i]:
-                    duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
-                    if self.parsed_xml['visualization'][i] == 'dropdown':
-                        # print(data_in_cut)
-                        # problem: nehme werte aus XML, eigentlich will ich aus data_in_cut
-                        # print(int(self.parsed_xml['value'][i]))
-                        self.list_of_widgets[i].setCurrentIndex(int(self.parsed_xml['value'][i]))
 
-                        print(duplicates)
+        try:
+            tmp_df = pd.DataFrame()
+            tmp_df['adr'] = []
+            tmp_df['value'] = []
+            print(tmp_df)
+            for i in range(len(self.reg_df)):
+                tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': data_in[:4]}
+                data_in = data_in[4:]
+            print(tmp_df)
+        except Exception as e:
+            print(e)
 
-                        for i in range(len(duplicates)):
-                            hex_mask = duplicates['bitmask'].iloc[i]
-                            hex_data = data_in_cut
-                            bin_mask = bin(int(hex_mask, 16))[2:].zfill(16)
-                            bin_data = bin(int(hex_data, 16))[2:].zfill(16)
-                            print(bin_mask)
-                            print(bin_data)
-                            print()
-                            print("------------------")
+        self.update_widgets()
 
-                            self.list_of_widgets[i].setCurrentIndex(bin)
 
-                            # pseudocode
-                            # 1. get index of active bits in bitmask
-                            # 2. loop
+    def update_widgets(self):
+        print("gui init:", self.gui_init)
+        try:
+            # duplicates = self.wid_df[self.wid_df['adr1'].duplicated(keep=False)]
+            # print(duplicates.to_string())
+            for i, row in self.wid_df.iterrows():
 
+                if row['visualization'] == 'hidden':
+                    print("hidden parameter!")
+                elif row['visualization'] == 'text':
+                    if self.gui_init == 0:
+                        self.grid.addWidget(QLabel(row['unit']), i, 3)
+                        widget = QLabel(row['name'])
+                        self.grid.addWidget(widget, i, 1)
+                        widget = QLineEdit(row['value'])
+                        self.list_of_widgets.append(widget)
+                        self.grid.addWidget(widget, i, 2)
+                    else:
+                        # for i in range(int(row['regcnt'])):
+                        #     print("adr" + str(i+1))
+
+                        # self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
                         pass
-                else:
-                    if self.parsed_xml['visualization'][i] == 'text':
-                        self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
-                        data_in = data_in[(self.parsed_xml['bit width'][i])//4:]
+                elif row['visualization'] == 'chkbox':
+                    if self.gui_init == 0:
+                        widget = QLabel(row['name'])
+                        self.grid.addWidget(widget, i, 1)
+                        widget = QCheckBox()
+                        # if '1' in row['value']:
+                        #     widget.setChecked(True)
+                        self.grid.addWidget(widget, i, 2)
+                        self.list_of_widgets.append(widget)
+                    else:
+                        # if '1' in row['value']:
+                        #     widget.setChecked(True)
+                        # else:
+                        #     widget.setChecked(False)
+                        pass
 
-                if addr == max_addr:
-                    break
-                else:
-                    addr = addr + len(self.parsed_xml['bitmask'][i])//4
-                    # print(addr)
-                i = 0
+                    # self.list_of_widgets.append(widget)
+                elif row['visualization'] == 'dropdown':
+                    if self.gui_init == 0:
+                        widget = QLabel(row['name'])
+                        self.grid.addWidget(widget, i, 1)
+                        widget = QComboBox()
+                        self.grid.addWidget(widget,i,2)
+                        self.list_of_widgets.append(widget)
+                        # print(row['ddcnt'])
+                        for i in range(int(row['ddcnt'])):
+                            widget.addItem(row['ddown'+str(i+1)])
+                    else:
+                        pass
+            self.gui_init = 1
+        except Exception as e:
+            print(e)
 
-            # elif addr == max_addr:
-            #     print("reached max address... exiting looop")
-            #     break
-
-            else:
-                i = i + 1
-
-
-            # data_in_cut = data_in[0:(i['bit width'])//4]
-            # # if (row['bit width'])
-            # if "ff" not in i['bitmask']:
-            #     # print("hey!")
-            #     duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
-            #     print(duplicates.to_string())
-            #     # print(data_in_cut)
-            # else:
-            #     if i['visualization'] == "text":
-            #         self.list_of_widgets[i].setText(str(int(data_in_cut, 16)))
-            #
-            #     elif i['visualization'] == "dropdown":
-            #         print("dropdown!")
-            #         print(data_in_cut)
-            #
-            #
-            #         # self.list_of_widgets[]
-            #
-            #     elif i['visualization'] == "chkbox":
-            #         print("checkbox!")
-            #         print(data_in_cut)
-            #
-            # data_in = data_in[(i['bit width'])//4:]
-
-
-
-        # duplicates = self.parsed_xml[self.parsed_xml['adr'].duplicated(keep=False)]
-        # print(duplicates.to_string())
-        # sum = 0
-        # for i in range(len(duplicates)):
-        #     # print("iloc: ", duplicates.iloc[i]['bitmask'])
-        #     sum += int(duplicates.iloc[i]['bitmask'], 16)
-        #     print(sum)
-
-        # print(self.parsed_xml[self.parsed_xml.index.duplicated(keep=False)])
-                                # print("test debug:", self.parsed_xml.index)
-                # print(self.parsed_xml.index[self.parsed_xml['adr']].tolist())
-        # print(len(self.parsed_xml))
-        # check for addr -> check for bitmask (duplicates) -> update widget
-
-        # pseudocode für read -> fill widgets
-        # 1. take address i -> check for duplicates -> get indexes of duplicates
-
-                                                                                    # this is how to update field qlineedit
-        # self.list_of_widgets[0].setText(str(int(data_in[:4], 16)))                  # desired value ch1
-        # self.list_of_widgets[2].setText(str(int(data_in[4:8], 16)))                 # desired value ch2
-        # self.list_of_widgets[1].setText(str(int(data_in[8:12], 16)))                # actual value ch1
-        # self.list_of_widgets[3].setText(str(int(data_in[12:16], 16)))               # actual value ch2
-        # self.list_of_widgets[4].setText(str(int(data_in[18:20], 16)))               # manual gain ch1
-        # self.list_of_widgets[6].setText(str(int(data_in[22:24], 16)))               # manual gain ch2
-        # self.list_of_widgets[7].setText(str(int(data_in[26:28], 16)))               # actual gain ch2
-        # self.list_of_widgets[5].setText(str(int(data_in[30:32], 16)))               # actual gain ch1
-        # self.list_of_widgets[11].setText(str(int(data_in[32:36], 16)))              # amp_window
-        # self.list_of_widgets[10].setText(str(int(data_in[36:44], 16) // 50))        # update rate
-
-        # bin_tmp = "{:08b}".format(int(data_in[48:52], 16)) # addr 12
-
-        # try:
-        #     bin_tmp = "{:08b}".format(int(data_in[48:52], 16)) # addr 12
-        #     if bin_tmp[0] == '1':
-        #         self.list_of_widgets[13].setChecked(True)
-        #     else:
-        #         self.list_of_widgets[13].setChecked(False)
-        #     if bin_tmp[5] == '1':
-        #         self.list_of_widgets[8].setCurrentIndex(1)
-        #     else:
-        #         self.list_of_widgets[8].setCurrentIndex(0)
-        #     if bin_tmp[6] == '1':
-        #         self.list_of_widgets[9].setCurrentIndex(1)
-        #     else:
-        #         self.list_of_widgets[9].setCurrentIndex(0)
-        #     if bin_tmp[7] == '1': # 12
-        #         self.list_of_widgets[12].setChecked(True)
-        #     else:
-        #         self.list_of_widgets[12].setChecked(False)
-        # except Exception as e:
-        #     print(e)
 
 
     def make_form(self, input_xml):
 
         self.list_of_widgets = []
-        self.list_of_param_name = []
-        self.list_of_reg_adr = []
+
+        # self.list_of_param_name = []
+        # self.list_of_reg_adr = []
         self.xml_path = "xml/"
         self.input_xml_file = self.xml_path + input_xml
-        tree = ET.parse(self.input_xml_file)                             # extract xml data
-        root = tree.getroot()
-        self.xml_data_list = []
+
+        # tree = ET.parse(self.input_xml_file)                             # extract xml data
+        # root = tree.getroot()
+        # self.xml_data_list = []
 
         # print(self.input_xml_file)
         # print(input_xml)
-
-        for element in root.findall("./param[@name]"):
-            self.list_of_param_name.append(element.attrib)
-            # print(element.attrib)
-            #self.xml_data_list.append(element.attrib)
-
-            for registers in element.findall(".//reg[@adr]"):
-                self.xml_data_list.append(registers.attrib)
-        for element in root.findall(".//reg[@adr]"):
-            self.list_of_reg_adr.append(element.attrib)
+        #
+        # for element in root.findall("./param[@name]"):
+        #     self.list_of_param_name.append(element.attrib)
+        #     # print(element.attrib)
+        #     #self.xml_data_list.append(element.attrib)
+        #
+        #     for registers in element.findall(".//reg[@adr]"):
+        #         self.xml_data_list.append(registers.attrib)
+        # for element in root.findall(".//reg[@adr]"):
+        #     self.list_of_reg_adr.append(element.attrib)
 
         # self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
         self.parsed_xml = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
-        print(self.parsed_xml.to_string())
-
-        # jetzt dataframe -> widgetframe mappen mit martins klasse!
 
 
-        # print(self.parsed_xml)
-        # columnSeriesObj = self.parsed_xml['name']
-        # for i in range(len(columnSeriesObj.values)):
-        #     print(columnSeriesObj.values[i])
-        # columnSeriesObj = self.parsed_xml['visualization']
-            # self.list_of_param_name.append(columnSeriesObj.values[i])
-        # print(self.list_of_param_name)
-        # for index in self.parsed_xml.index:
-        #     self.list_of_param_name.append(self.parsed_xml['name'][index])
+        self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
+        # print(self.parsed_xml.to_string())
+        print(self.wid_df.to_string())
+        reg_data = RFDevConf_Reg_Data()
+        self.reg_df = reg_data.DataFrame2Reg(self.wid_df, False)
+        print(self.reg_df)
 
-        try:
-            # print(self.list_of_param_name) # need to rework the bottom parser....!
-            for i, row in self.parsed_xml.iterrows():
-                if row['visualization'] == 'hidden':
-                    print("hidden parameter!")
-                elif row['visualization'] == 'text':
-                    widget = QLabel(row['name'])
-                    self.grid.addWidget(widget, i, 1)
-                    widget = QLineEdit(row['value'])
-                    self.list_of_widgets.append(widget)
-                    self.grid.addWidget(widget, i, 2)
-                    self.grid.addWidget(QLabel(row['unit']), i, 3)
-                elif row['visualization'] == 'chkbox':
-                    widget = QLabel(row['name'])
-                    self.grid.addWidget(widget, i, 1)
-                    widget = QCheckBox()
-                    if '1' in row['value']:
-                        widget.setChecked(True)
-                    self.grid.addWidget(widget, i, 2)
-                    self.list_of_widgets.append(widget)
-                    # self.list_of_widgets.append(widget)
-                elif row['visualization'] == 'dropdown':
-                    widget = QLabel(row['name'])
-                    self.grid.addWidget(widget, i, 1)
-                    widget = QComboBox()
-                    self.grid.addWidget(widget,i,2)
-                    self.list_of_widgets.append(widget)
-                    print(row['ddcnt'])
-                    for i in range(int(row['ddcnt'])):
-                        widget.addItem(row['ddown'+str(i+1)])
-        except Exception as e:
-            print(e)
+        self.gui_init = 0
+
+
+
+        self.update_widgets()
+        #
+        # try:
+        #     # print(self.list_of_param_name) # need to rework the bottom parser....!
+        #     # for i, row in self.parsed_xml.iterrows():
+        #
+        #     duplicates = wid_df[wid_df['adr1'].duplicated(keep=False)]
+        #     print(duplicates.to_string())
+        #
+        #     for i, row in wid_df.iterrows():
+        #
+        #         if row['visualization'] == 'hidden':
+        #             print("hidden parameter!")
+        #         elif row['visualization'] == 'text':
+        #             if self.gui_init == 0:
+        #                 self.grid.addWidget(QLabel(row['unit']), i, 3)
+        #                 widget = QLabel(row['name'])
+        #                 self.grid.addWidget(widget, i, 1)
+        #                 widget = QLineEdit(row['value'])
+        #                 self.list_of_widgets.append(widget)
+        #                 self.grid.addWidget(widget, i, 2)
+        #             else:
+        #
+        #                 # for i in range(int(row['regcnt'])):
+        #                 #     print("adr" + str(i+1))
+        #
+        #                 self.list_of_widgets[i].setCurrentIndex(wid_df['value'][i])
+        #
+        #
+        #
+        #         elif row['visualization'] == 'chkbox':
+        #             widget = QLabel(row['name'])
+        #             self.grid.addWidget(widget, i, 1)
+        #             widget = QCheckBox()
+        #             if '1' in row['value']:
+        #                 widget.setChecked(True)
+        #             self.grid.addWidget(widget, i, 2)
+        #             self.list_of_widgets.append(widget)
+        #             # self.list_of_widgets.append(widget)
+        #         elif row['visualization'] == 'dropdown':
+        #             widget = QLabel(row['name'])
+        #             self.grid.addWidget(widget, i, 1)
+        #             widget = QComboBox()
+        #             self.grid.addWidget(widget,i,2)
+        #             self.list_of_widgets.append(widget)
+        #             print(row['ddcnt'])
+        #             for i in range(int(row['ddcnt'])):
+        #                 widget.addItem(row['ddown'+str(i+1)])
+        #     self.gui_init = 1
+        # except Exception as e:
+        #     print(e)
 
 
         # time.sleep(100)
