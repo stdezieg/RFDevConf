@@ -28,8 +28,11 @@ def formatRegDiscription(MemAddress, MemContent16bitHex):
     # the return value has 1+12+2=15 hexadecimal digits
     return ':' + hexString.upper() + hexParityCheck.upper()
 
-def get_indices(element, lst):
-    return [i for i in range(len(lst)) if lst[i] == element]
+def open_main_window():
+    app = QApplication(sys.argv)
+    window = init_window()
+    window.show()
+    sys.exit(app.exec())
 
 def print_dict(dictionary, indent=2):
     if isinstance(dictionary, dict):  # Überprüfen, ob es sich um ein Dictionary handelt
@@ -118,7 +121,6 @@ def xml_to_dataframe_xml2dict(infile):
     new_cols = [x for x in cols if x not in adr_and_mask_list and x not in dd_list] #get su list without the elements from the other lists
     new_cols = new_cols+adr_and_mask_list+dd_list # fuse all together again
     df = df.reindex(columns=new_cols) # perform new order
-
     df = df.fillna('')
     # df.to_csv("dataframe_MH.csv", sep=';')
     return df
@@ -321,78 +323,6 @@ class RFDevConf_Reg_Data:
 
         return pd.DataFrame(self.wid_dict) #retrun resulting dict as pandas data frame
 
-
-# def xml_to_dataframe(infile):
-#     df = pd.DataFrame()
-#     tree = ET.parse(infile)
-#     root = tree.getroot()
-
-    # for element in root.findall("./param[@name]"):
-    #     merged_dict = dict(element.attrib)
-    #     merged_dict_list = list(merged_dict.items())
-    #     # print(merged_dict_list)
-    #     for registers in element.findall(".//reg[@adr]"):
-    #         merged_dict.update(registers.attrib)
-    #         merged_dict_list.append(list(registers.attrib.items()))
-    #         # merged_dict_list
-    #         # print(merged_dict_list)
-    #     i = 0
-    #     for enumentry in element.findall(".//enumentry[@name]"):
-    #         i = i + 1
-    #         # registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
-    #         merged_dict.update({"ddown" + str(i):enumentry.attrib['name']})
-    #
-    #         # tmp_dict = registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']})
-    #         merged_dict_list.append(list(registers.attrib.items()))
-    #         # merged_dict_list.append(list(tmp_dict))
-    #
-    #     # print(merged_dict_list)
-    #     new_dict = dict(merged_dict_list)
-    #     print(new_dict)
-    #     # print(merged_dict)
-    #     df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)             # add dictionary to dataframe
-    #     # df = pd.concat([df, pd.DataFrame([new_dict])], ignore_index=True)             # add dictionary to dataframe
-    #
-    # df = df.fillna('')
-    # # print(df.to_string())
-    # return df
-
-def xml_to_dataframe(infile):
-    df = pd.DataFrame()
-    tree = ET.parse(infile)
-    root = tree.getroot()
-
-    for element in root.findall("./param[@name]"): # parse xml by <param name
-        for registers in element.findall(".//reg[@adr]"): # parse xml by <reg adr
-            registers.attrib.update({'bit width':len(registers.attrib['bitmask'])*4}) # add bit width of widget to dict
-            break
-        i = 0
-        for enumentry in element.findall(".//enumentry[@name]"): # parse xml by <enumentry name
-            i = i + 1
-            registers.attrib.update({"ddown" + str(i):enumentry.attrib['name']}) # add dropdown options to dict
-
-        merged_dict = dict(element.attrib)
-        merged_dict.update(registers.attrib)
-        # print(merged_dict)
-        df = pd.concat([df, pd.DataFrame([merged_dict])], ignore_index=True)   # transform to dataframe
-
-    df = df.fillna('')
-    print(df.to_string())
-    # df.to_csv("dataframe.csv", sep=';')
-    return df
-
-def list_duplicates(seq):
-  seen = set()
-  seen_add = seen.add
-  seen_twice = list(set(x for x in seq if x in seen or seen_add(x)))
-  return seen_twice
-
-def open_main_window():
-    app = QApplication(sys.argv)
-    window = init_window() #2
-    window.show()
-    sys.exit(app.exec())
-
 class init_window(QWidget):                                     # START WINDOW -> Auto-Detect/Select Device or Hexflash
 
     def __init__(self):
@@ -423,7 +353,6 @@ class init_window(QWidget):                                     # START WINDOW -
             self.device_list.addItem(file[4:])                          # cut path and add to device list
             # self.device_list.addItem(file)                          # cut path and add to device list
             # print(file[4:])
-
 
         layout.addWidget(self.device_list)
         self.confirm_button = QPushButton("Open Device Configuration", self)
@@ -572,39 +501,61 @@ class DeviceConfiguration(QWidget):
     def gen_data_string(self):
 
         data_out = ""
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[0].text())) # desired value 1
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[2].text())) # desired value 2
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[1].text())) # actual value 1
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[3].text())) # actual value 2
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[4].text())) # manual gain ch1
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[6].text())) # manual gain ch2
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[7].text())) # actual gain ch2
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[5].text())) # actual gain ch1
-        data_out = data_out + "{:04X}".format(int(self.list_of_widgets[11].text()))  # amplutude window
-        data_out = data_out + "{:08X}".format(int(self.list_of_widgets[10].text())*50) # update rate
+        self.update_widgets()
+        self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
+        # print(self.reg_df.to_string())
+        # print(len(self.reg_df))
+        # for i in range(len(self.reg_df)):
+        #     # data_out = data_out + ""
+        #     print([i][self.reg_df])
+        #
+        try:
+            for i, row in self.reg_df.iterrows():
+                # print(row['value'])
+                data_out = data_out + "{:04X}".format(int(row['value']))
+                # print(data_out)
+        except Exception as e:
+            print(e)
 
-        bin_tmp = 0
-        if self.list_of_widgets[8].currentText() == "Auto":
-            bin_tmp = bin_tmp + 0
-        else:
-            bin_tmp = bin_tmp + 4
-        if self.list_of_widgets[9].currentText() == "Auto":
-            bin_tmp = bin_tmp + 0
-        else:
-            bin_tmp = bin_tmp + 2
-        if self.list_of_widgets[12].isChecked():
-            bin_tmp = bin_tmp + 1
-        else:
-            bin_tmp = bin_tmp + 0
-        if self.list_of_widgets[13].isChecked():
-            bin_tmp = bin_tmp + 128
-        else:
-            bin_tmp = bin_tmp + 0
+        # print(data_out)
+        # pass
+        # try:
+        #     data_out = ""
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[0].text())) # desired  value 1
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[2].text())) # desired value 2
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[1].text())) # actual value 1
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[3].text())) # actual value 2
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[4].text())) # manual gain ch1
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[6].text())) # manual gain ch2
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[7].text())) # actual gain ch2
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[5].text())) # actual gain ch1
+        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[11].text()))  # amplutude window
+        #     data_out = data_out + "{:08X}".format(int(self.list_of_widgets[10].text())*50) # update rate
+        #
+        #     bin_tmp = 0
+        #     if self.list_of_widgets[8].currentText() == "Auto":
+        #         bin_tmp = bin_tmp + 0
+        #     else:
+        #         bin_tmp = bin_tmp + 4
+        #     if self.list_of_widgets[9].currentText() == "Auto":
+        #         bin_tmp = bin_tmp + 0
+        #     else:
+        #         bin_tmp = bin_tmp + 2
+        #     if self.list_of_widgets[12].isChecked():
+        #         bin_tmp = bin_tmp + 1
+        #     else:
+        #         bin_tmp = bin_tmp + 0
+            # if self.list_of_widgets[13].isChecked():
+            #     bin_tmp = bin_tmp + 128
+            # else:
+            #     bin_tmp = bin_tmp + 0
 
-        data_out = data_out + "00" +"{:02X}".format(bin_tmp) # control register
+        # data_out = data_out + "00" +"{:02X}".format(bin_tmp) # control register
         chunks, chunk_size = len(data_out), 32
         data_out = [data_out[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
 
+        print(data_out)
+        # time.sleep(100)
         return data_out
 
     def initMe(self, input_xml):                                    # widget init params
@@ -636,6 +587,7 @@ class DeviceConfiguration(QWidget):
             self.flash_flag = 0
 
         data_out = self.gen_data_string()
+        # time.sleep(100)
 
         if self.flash_flag == 1:
             print("erasing flash memory. please wait.")
@@ -675,7 +627,6 @@ class DeviceConfiguration(QWidget):
             print("FPGA reset done!")
             # self.ser.flushInput()
             # self.ser.flushOutput()
-
         print("---------- OPERATION COMPLETED ------------")
 
     def receive_hexfile(self):
@@ -718,23 +669,18 @@ class DeviceConfiguration(QWidget):
 
         data_in = ''.join(data_in)
         data_in = data_in[:52]
-        print(data_in)
-
-        try:
-            tmp_df = pd.DataFrame()
-            tmp_df['adr'] = []
-            tmp_df['value'] = []
-            print(tmp_df)
-            for i in range(len(self.reg_df)):
-                tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': int(data_in[:4], 16)}
-                data_in = data_in[4:]
-            print(tmp_df)
-        except Exception as e:
-            print(e)
-
+        # print(data_in)
+        tmp_df = pd.DataFrame()
+        tmp_df['adr'] = []
+        tmp_df['value'] = []
+        # print(tmp_df)
+        for i in range(len(self.reg_df)):
+            tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': int(data_in[:4], 16)}
+            data_in = data_in[4:]
+        # print(tmp_df)
         self.reg_df = tmp_df
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
-        print(self.wid_df.to_string())
+        # print(self.wid_df.to_string())
         self.update_widgets()
 
 
@@ -790,152 +736,20 @@ class DeviceConfiguration(QWidget):
     def make_form(self, input_xml):
 
         self.list_of_widgets = []
-
-        # self.list_of_param_name = []
-        # self.list_of_reg_adr = []
         self.xml_path = "xml/"
         self.input_xml_file = self.xml_path + input_xml
-
-        # tree = ET.parse(self.input_xml_file)                             # extract xml data
-        # root = tree.getroot()
-        # self.xml_data_list = []
-
-        # print(self.input_xml_file)
-        # print(input_xml)
-        #
-        # for element in root.findall("./param[@name]"):
-        #     self.list_of_param_name.append(element.attrib)
-        #     # print(element.attrib)
-        #     #self.xml_data_list.append(element.attrib)
-        #
-        #     for registers in element.findall(".//reg[@adr]"):
-        #         self.xml_data_list.append(registers.attrib)
-        # for element in root.findall(".//reg[@adr]"):
-        #     self.list_of_reg_adr.append(element.attrib)
-
-        # self.parsed_xml = xml_to_dataframe(self.xml_path + input_xml)
-        self.parsed_xml = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
-
-
         self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
-        # print(self.parsed_xml.to_string())
-        # print(self.wid_df.to_string())
         self.reg_data = RFDevConf_Reg_Data()
         self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
-        # print(self.reg_df)
-
         self.gui_init = 0
-
-
-
         self.update_widgets()
-        #
-        # try:
-        #     # print(self.list_of_param_name) # need to rework the bottom parser....!
-        #     # for i, row in self.parsed_xml.iterrows():
-        #
-        #     duplicates = wid_df[wid_df['adr1'].duplicated(keep=False)]
-        #     print(duplicates.to_string())
-        #
-        #     for i, row in wid_df.iterrows():
-        #
-        #         if row['visualization'] == 'hidden':
-        #             print("hidden parameter!")
-        #         elif row['visualization'] == 'text':
-        #             if self.gui_init == 0:
-        #                 self.grid.addWidget(QLabel(row['unit']), i, 3)
-        #                 widget = QLabel(row['name'])
-        #                 self.grid.addWidget(widget, i, 1)
-        #                 widget = QLineEdit(row['value'])
-        #                 self.list_of_widgets.append(widget)
-        #                 self.grid.addWidget(widget, i, 2)
-        #             else:
-        #
-        #                 # for i in range(int(row['regcnt'])):
-        #                 #     print("adr" + str(i+1))
-        #
-        #                 self.list_of_widgets[i].setCurrentIndex(wid_df['value'][i])
-        #
-        #
-        #
-        #         elif row['visualization'] == 'chkbox':
-        #             widget = QLabel(row['name'])
-        #             self.grid.addWidget(widget, i, 1)
-        #             widget = QCheckBox()
-        #             if '1' in row['value']:
-        #                 widget.setChecked(True)
-        #             self.grid.addWidget(widget, i, 2)
-        #             self.list_of_widgets.append(widget)
-        #             # self.list_of_widgets.append(widget)
-        #         elif row['visualization'] == 'dropdown':
-        #             widget = QLabel(row['name'])
-        #             self.grid.addWidget(widget, i, 1)
-        #             widget = QComboBox()
-        #             self.grid.addWidget(widget,i,2)
-        #             self.list_of_widgets.append(widget)
-        #             print(row['ddcnt'])
-        #             for i in range(int(row['ddcnt'])):
-        #                 widget.addItem(row['ddown'+str(i+1)])
-        #     self.gui_init = 1
-        # except Exception as e:
-        #     print(e)
-
-
-        # time.sleep(100)
-
-
-
-
-
-        # for i in range(len(self.list_of_param_name)): # old parser
-        #     if "hidden" not in list(self.list_of_param_name[i].values()):     # check xml file for "name" value
-        #         widget = QLabel(self.list_of_param_name[i]['name'])
-        #         self.grid.addWidget(widget,i,1)
-        #
-        #     if "text" in list(self.list_of_param_name[i].values()):           # check xml file for "text" value
-        #         widget = QLineEdit(self.list_of_param_name[i]['value'])
-        #         self.list_of_widgets.append(widget)
-        #         self.grid.addWidget(widget,i,2)
-        #         widget = self.grid.addWidget(QLabel(self.list_of_param_name[i]['unit']),i,3) # [third column]
-        #
-        #     if "chkbox" in list(self.list_of_param_name[i].values()):         # check xml file for "chkbox" value
-        #         widget = QCheckBox()
-        #         if '1' in list(self.list_of_param_name[i].values()):
-        #             widget.setChecked(True)
-        #         self.grid.addWidget(widget,i,2)
-        #         self.list_of_widgets.append(widget)
-        #
-        #     if "dropdown" in list(self.list_of_param_name[i].values()):       # check xml file for "dropdown" value
-        #         widget = QComboBox()
-        #         self.grid.addWidget(widget,i,2)
-        #         self.list_of_widgets.append(widget)
-        #
-        #     try:                                                           #
-        #         x = list(root[i].attrib.values())
-        #         # print(x)
-        #         if "dropdown" in x:
-        #             dropdown_elements = []
-        #             for e in range(16):
-        #                 try:
-        #                     if "name" in list(root[i][e].attrib):
-        #                         tmp = list(root[i][e].attrib.values())
-        #                         dropdown_elements.append(tmp[0])
-        #                 except Exception as e:
-        #                     pass
-        #             for element in dropdown_elements:
-        #                 widget.addItem(element)
-        #     except Exception as e:
-        #         print(e)
-        #     else:
-        #         pass
-
         write_button = QPushButton("Write")                     # append read/write buttons at the end
         read_button = QPushButton("Read")
         self.flash_combobox = QComboBox()
         self.flash_combobox.addItem("RAM")
         self.flash_combobox.addItem("Flash")
         self.flash_combobox.setCurrentIndex(0)
-        # write_button.clicked.connect(self.send_hexfile)
+        write_button.clicked.connect(self.send_hexfile)
         write_button.clicked.connect(self.send_hexfile)
         read_button.clicked.connect(self.receive_hexfile)
         self.grid.addWidget(write_button, 1000, 1)
