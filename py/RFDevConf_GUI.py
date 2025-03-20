@@ -501,21 +501,27 @@ class DeviceConfiguration(QWidget):
     def gen_data_string(self):
 
         data_out = ""
-        self.update_widgets()
+        self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
         self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
-        # print(self.reg_df.to_string())
-        # print(len(self.reg_df))
-        # for i in range(len(self.reg_df)):
-        #     # data_out = data_out + ""
-        #     print([i][self.reg_df])
-        #
+
+
+        # modify widget dataframe
         try:
-            for i, row in self.reg_df.iterrows():
-                # print(row['value'])
-                data_out = data_out + "{:04X}".format(int(row['value']))
-                # print(data_out)
+            for i, row in self.wid_df.iterrows():
+                if isinstance(self.list_of_widgets[i], QLineEdit) == True:
+                    #self.wid_df.row['value'] = self.list_of_widgets[i].text()
+                    self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
+                    pass
         except Exception as e:
             print(e)
+
+        print(self.wid_df.to_string())
+
+        # transform to register dataframe ??? same object?
+        # slice register
+        # or just generate data_out string and send to fpga... tmp_df...?
+
+        # print(self.reg_df.to_string())
 
         # print(data_out)
         # pass
@@ -549,7 +555,7 @@ class DeviceConfiguration(QWidget):
             #     bin_tmp = bin_tmp + 128
             # else:
             #     bin_tmp = bin_tmp + 0
-
+        # time.sleep(100)
         # data_out = data_out + "00" +"{:02X}".format(bin_tmp) # control register
         chunks, chunk_size = len(data_out), 32
         data_out = [data_out[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
@@ -749,7 +755,6 @@ class DeviceConfiguration(QWidget):
         self.flash_combobox.addItem("RAM")
         self.flash_combobox.addItem("Flash")
         self.flash_combobox.setCurrentIndex(0)
-        write_button.clicked.connect(self.send_hexfile)
         write_button.clicked.connect(self.send_hexfile)
         read_button.clicked.connect(self.receive_hexfile)
         self.grid.addWidget(write_button, 1000, 1)
