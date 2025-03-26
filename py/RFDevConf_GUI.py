@@ -499,69 +499,29 @@ class DeviceConfiguration(QWidget):
         super().__init__()
 
     def gen_data_string(self):
-
         data_out = ""
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
-        self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
 
-
-        # modify widget dataframe
-        try:
+        try: # def yield_widget_values(self)
             for i, row in self.wid_df.iterrows():
                 if isinstance(self.list_of_widgets[i], QLineEdit) == True:
-                    #self.wid_df.row['value'] = self.list_of_widgets[i].text()
                     self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
-                    pass
+                elif isinstance(self.list_of_widgets[i], QCheckBox) == True:
+                    if self.list_of_widgets[i].isChecked():
+                        self.wid_df.loc[i, 'value'] = 1
+                    else:
+                        self.wid_df.loc[i, 'value'] = 0
+                elif isinstance(self.list_of_widgets[i], QComboBox) == True:
+                    self.wid_df.loc[i, 'value'] = row['ddvalue'+str(self.list_of_widgets[i].currentIndex()+1)]
         except Exception as e:
             print(e)
 
-        print(self.wid_df.to_string())
-
-        # transform to register dataframe ??? same object?
-        # slice register
-        # or just generate data_out string and send to fpga... tmp_df...?
-
-        # print(self.reg_df.to_string())
-
-        # print(data_out)
-        # pass
-        # try:
-        #     data_out = ""
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[0].text())) # desired  value 1
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[2].text())) # desired value 2
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[1].text())) # actual value 1
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[3].text())) # actual value 2
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[4].text())) # manual gain ch1
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[6].text())) # manual gain ch2
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[7].text())) # actual gain ch2
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[5].text())) # actual gain ch1
-        #     data_out = data_out + "{:04X}".format(int(self.list_of_widgets[11].text()))  # amplutude window
-        #     data_out = data_out + "{:08X}".format(int(self.list_of_widgets[10].text())*50) # update rate
-        #
-        #     bin_tmp = 0
-        #     if self.list_of_widgets[8].currentText() == "Auto":
-        #         bin_tmp = bin_tmp + 0
-        #     else:
-        #         bin_tmp = bin_tmp + 4
-        #     if self.list_of_widgets[9].currentText() == "Auto":
-        #         bin_tmp = bin_tmp + 0
-        #     else:
-        #         bin_tmp = bin_tmp + 2
-        #     if self.list_of_widgets[12].isChecked():
-        #         bin_tmp = bin_tmp + 1
-        #     else:
-        #         bin_tmp = bin_tmp + 0
-            # if self.list_of_widgets[13].isChecked():
-            #     bin_tmp = bin_tmp + 128
-            # else:
-            #     bin_tmp = bin_tmp + 0
-        # time.sleep(100)
-        # data_out = data_out + "00" +"{:02X}".format(bin_tmp) # control register
+        self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
+        for i, row in self.reg_df.iterrows():
+            data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i, 'value']))
         chunks, chunk_size = len(data_out), 32
         data_out = [data_out[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
 
-        print(data_out)
-        # time.sleep(100)
         return data_out
 
     def initMe(self, input_xml):                                    # widget init params
@@ -731,7 +691,7 @@ class DeviceConfiguration(QWidget):
                         for i in range(int(row['ddcnt'])):
                             widget.addItem(row['ddown'+str(i+1)])
                     else:
-                        self.list_of_widgets[i].setCurrentIndex(row['value'])
+                        self.list_of_widgets[i].setCurrentIndex(row['value']) ## !!! gibt probleme mit index und value
                         pass
             self.gui_init = 1
         except Exception as e:
