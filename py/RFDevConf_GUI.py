@@ -576,13 +576,32 @@ class DeviceConfiguration(QWidget):
             elif self.ser.inWaiting() > 6: # expecting 26 bytes at serial input
                 time.sleep(1)
                 # print("data_out[1]", data_out[1])
-                if self.flash_flag == 1:
-                    self.ser.write(RFDevConf.bitstring_to_bytes(
-                        RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
-                elif self.flash_flag == 0:
-                    self.ser.write(RFDevConf.bitstring_to_bytes(
-                        RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
-                break
+
+                # checksum prüfung fehlt! ->
+                checksum_out = int(format(bin(int(data_out[0],16)).count('1'),"08b"),2)
+                frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(7)).bin)
+                if frame_in.checksum == checksum_out:
+                    print("correct checksum!")
+
+                    if self.flash_flag == 1:  # break needs to be dynamic. depending on application!
+                        self.ser.write(RFDevConf.bitstring_to_bytes(
+                            RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
+                    elif self.flash_flag == 0:
+                        self.ser.write(RFDevConf.bitstring_to_bytes(
+                            RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
+                    break
+                else:
+                    print("incorrect checksum!: ", checksum_out, " ", frame_in.checksum)
+
+
+                # if self.flash_flag == 1:  # break needs to be dynamic. depending on application!
+                #     self.ser.write(RFDevConf.bitstring_to_bytes(
+                #         RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
+                # elif self.flash_flag == 0:
+                #     self.ser.write(RFDevConf.bitstring_to_bytes(
+                #         RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
+                # break
+
         print("data transmitted!")
 
         if self.flash_flag == 1:
@@ -591,8 +610,8 @@ class DeviceConfiguration(QWidget):
             print("resetting fpga...")
             time.sleep(3)
             print("FPGA reset done!")
-            # self.ser.flushInput()
-            # self.ser.flushOutput()
+            self.ser.flushInput()
+            self.ser.flushOutput()
         print("---------- OPERATION COMPLETED ------------")
 
     def receive_hexfile(self):
@@ -623,7 +642,7 @@ class DeviceConfiguration(QWidget):
                 frame_in = RFDevConf.ReceiveFrame(data_buffer_in)
                 frame_in = frame_in.cleanup[47:]
                 data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
-                if cnt == 2:
+                if cnt == 2: # break needs to be dynamic. depending on application!
                     break
                 else:
                     if self.flash_flag == 1:
