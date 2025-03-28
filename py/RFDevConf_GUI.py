@@ -598,57 +598,41 @@ class DeviceConfiguration(QWidget):
 
     def receive_hexfile(self):
 
-        if self.flash_combobox.currentText() == "Flash":
-            self.flash_flag = 1
-        else:
-            self.flash_flag = 0
-
-        self.ser.flushInput()
-
-        if self.flash_flag == 1:
-            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=65536)))
-        elif self.flash_flag == 0:
-            self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=16)))
+        self.flash_flag = 1 if self.flash_combobox.currentText() == "Flash" else 0 # Set flash flag based on dropdown selection
+        self.ser.flushInput() # Clear serial buffer
+        address = 65536 if self.flash_flag else 16 # Set initial address based on flash flag
+        self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=address)))
 
         data_in = []
         cnt = 0
         start_time = time.time()
 
         while True:
-            if time.time() - start_time > 3.0:
-                print("FPGA not responding... exiting program.")
+            if time.time() - start_time > 3.0: # Timeout check
                 sys.exit("FPGA not responding... exiting program.")
-            elif self.ser.inWaiting() > 24: # expecting 26 bytes at serial input
-                cnt = cnt + 1
-                data_buffer_in = BitArray(self.ser.read(25)).bin
-                frame_in = RFDevConf.ReceiveFrame(data_buffer_in)
-                frame_in = frame_in.cleanup[47:]
-                data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
-                if cnt == 2: # break needs to be dynamic. depending on application!
-                    break
-                else:
-                    if self.flash_flag == 1:
-                        self.ser.write(
-                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=65552)))
-                    elif self.flash_flag == 0:
-                        self.ser.write(
-                            RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=24)))
 
-        data_in = ''.join(data_in)
-        data_in = data_in[:52]
-        # print(data_in)
-        tmp_df = pd.DataFrame()
-        tmp_df['adr'] = []
-        tmp_df['value'] = []
-        # print(tmp_df)
+            if self.ser.inWaiting() > 24:  # Read incoming data
+                cnt += 1
+                frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(25)).bin).cleanup[47:]
+                data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
+
+                if cnt == 2:  # Break condition (dynamic based on application)
+                    break
+
+                # Request next data block
+                address += 16 if self.flash_flag else 8
+                self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=address)))
+
+        data_in = ''.join(data_in)[:52] # Process received data
+        tmp_df = pd.DataFrame(columns=['adr', 'value']) # Create DataFrame from received values
+
         for i in range(len(self.reg_df)):
             tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': int(data_in[:4], 16)}
             data_in = data_in[4:]
-        # print(tmp_df)
+
         self.reg_df = tmp_df
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
-        # print(self.wid_df.to_string())
-        self.update_widgets()
+        self.update_widgets() # Update instance variables and UI
 
 
     def update_widgets(self):
