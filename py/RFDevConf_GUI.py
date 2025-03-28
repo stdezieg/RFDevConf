@@ -553,54 +553,36 @@ class DeviceConfiguration(QWidget):
             self.flash_flag = 0
 
         data_out = self.gen_data_string()
-        # time.sleep(100)
 
         if self.flash_flag == 1:
-            print("erasing flash memory. please wait.")
+            print("Erasing flash memory. Please wait.")
             self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.erase_flash(1)))
             time.sleep(1.5)
 
-        if self.flash_flag == 1:
-            self.ser.write(RFDevConf.bitstring_to_bytes(
-                RFDevConf.write_request(flash=self.flash_flag, address=65536, data=data_out[0])))
-        elif self.flash_flag == 0:
-            self.ser.write(RFDevConf.bitstring_to_bytes(
-                RFDevConf.write_request(flash=self.flash_flag, address=16, data=data_out[0])))
-        # self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash=self.flash_flag, address=16, data="DDAAFF1337FF112233445566778899D7")))
-        # print("data_out[0]", data_out[0])
+        address = 65536 if self.flash_flag else 16  # Set initial address
         start_time = time.time()
-        while True:
+
+        while data_out:
+            # Exit if no response for too long
             if time.time() - start_time > 3.0:
-                print("FPGA not responding... exiting program.")
                 sys.exit("FPGA not responding... exiting program.")
-            elif self.ser.inWaiting() > 6: # expecting 26 bytes at serial input
-                time.sleep(1)
-                # print("data_out[1]", data_out[1])
 
-                # checksum prüfung fehlt! ->
-                checksum_out = int(format(bin(int(data_out[0],16)).count('1'),"08b"),2)
-                frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(7)).bin)
-                if frame_in.checksum == checksum_out:
-                    print("correct checksum!")
+            # Send first packet
+            self.ser.write(RFDevConf.bitstring_to_bytes(
+                RFDevConf.write_request(flash=self.flash_flag, address=address, data=data_out[0])))
 
-                    if self.flash_flag == 1:  # break needs to be dynamic. depending on application!
-                        self.ser.write(RFDevConf.bitstring_to_bytes(
-                            RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
-                    elif self.flash_flag == 0:
-                        self.ser.write(RFDevConf.bitstring_to_bytes(
-                            RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
-                    break
-                else:
-                    print("incorrect checksum!: ", checksum_out, " ", frame_in.checksum)
+            # Wait for response
+            while self.ser.inWaiting() <= 6:
+                if time.time() - start_time > 3.0:
+                    sys.exit("FPGA not responding... exiting program.")
 
+            # Read response and check checksum
+            frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(7)).bin)
+            checksum_out = bin(int(data_out[0], 16)).count('1')
 
-                # if self.flash_flag == 1:  # break needs to be dynamic. depending on application!
-                #     self.ser.write(RFDevConf.bitstring_to_bytes(
-                #         RFDevConf.write_request(flash=self.flash_flag, address=65552, data=data_out[1])))
-                # elif self.flash_flag == 0:
-                #     self.ser.write(RFDevConf.bitstring_to_bytes(
-                #         RFDevConf.write_request(flash=self.flash_flag, address=24, data=data_out[1])))
-                # break
+            if frame_in.checksum == checksum_out:
+                data_out.pop(0)  # Remove successfully sent data
+                address += 16 if self.flash_flag else 8  # Update address
 
         print("data transmitted!")
 
