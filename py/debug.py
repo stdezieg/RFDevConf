@@ -393,17 +393,24 @@ if __name__ == '__main__':
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 0,data="DDAAFF1337FF112233445566778899D7")))
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="00000000000000000000000000000000")))
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 32,data="02BC0001E84800000000000000000000")))
+    # flash agc with correct parameters:
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65536,data="17701770003C003200060030004F004F")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65552,data="02BC0001E84800000000000000000000")))
+
     # verify agc parameters (flash):
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=0))) # returns DDAAFF1337FF112233445566778899D7 on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=16))) # returns 17701770003C003200060030004F004F on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=32))) # returns 02BC0001E84800000000000000000000 on valid agc
+    # verify agc parameters (flash):
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=65536))) # returns DDAAFF1337FF112233445566778899D7 on valid agc
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=65552))) # returns 17701770003C003200060030004F004F on valid agc
     # verify agc parameters (ram):
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=0))) # returns DDAAFF1337FF112233445566778899D7 on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=8))) # returns 17701770003C003200060030004F004F on valid agc
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=16))) # returns 02BC0001E84800000000000000000000 on valid agc
     ##############################################################################################################################
     # 65536
-    # ser.write(bitstring_to_bytes(read_request(flash=0, address=0)))
+    ser.write(bitstring_to_bytes(read_request(flash=0, address=50)))
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=16)))
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="DDAAFF1337FF112233445566778899D7")))
 
@@ -426,7 +433,7 @@ if __name__ == '__main__':
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="01020304050607080910111213141516")))
 
 
-    ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="00000000000000000000133700000000")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="00000000000000000000133700000000")))
     # ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash = 0, address = 0, data ="00000000000000000000133700000000"))) # reset!!!))
 
 

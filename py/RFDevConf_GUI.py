@@ -616,7 +616,8 @@ class DeviceConfiguration(QWidget):
                 frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(25)).bin).cleanup[47:]
                 data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
 
-                if cnt == 2:  # Break condition (dynamic based on application)
+                # if cnt == 2:  # Break condition (dynamic based on application)
+                if cnt == self.register_depth // 8 + (self.register_depth % 8 > 0):  # Break condition (dynamic based on application)
                     break
 
                 # Request next data block
@@ -686,27 +687,34 @@ class DeviceConfiguration(QWidget):
 
     def make_form(self, input_xml):
 
-        self.list_of_widgets = []
-        self.xml_path = "xml/"
-        self.input_xml_file = self.xml_path + input_xml
-        self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
-        self.reg_data = RFDevConf_Reg_Data()
-        self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
-        self.gui_init = 0
-        self.update_widgets()
-        write_button = QPushButton("Write")                     # append read/write buttons at the end
-        read_button = QPushButton("Read")
-        self.flash_combobox = QComboBox()
-        self.flash_combobox.addItem("RAM")
-        self.flash_combobox.addItem("Flash")
-        self.flash_combobox.setCurrentIndex(0)
-        write_button.clicked.connect(self.send_hexfile)
-        read_button.clicked.connect(self.receive_hexfile)
-        self.grid.addWidget(write_button, 1000, 1)
-        self.grid.addWidget(read_button, 1000, 2)
-        self.grid.addWidget(self.flash_combobox, 1000, 3)
-        # self.grid.addWidget(QLabel("Flash"),14,3)
-        # self.receive_hexfile()
+        try:
+            self.list_of_widgets = []
+            self.xml_path = "xml/"
+            self.input_xml_file = self.xml_path + input_xml
+
+            self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
+            self.reg_data = RFDevConf_Reg_Data()
+            self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
+            self.gui_init = 0
+            self.register_depth = len(self.reg_df)
+            # print("register depth is: ", self.register_depth)
+            # print(self.register_depth // 8 + (self.register_depth % 8 > 0))
+            self.update_widgets()
+            write_button = QPushButton("Write")                     # append read/write buttons at the end
+            read_button = QPushButton("Read")
+            self.flash_combobox = QComboBox()
+            self.flash_combobox.addItem("RAM")
+            self.flash_combobox.addItem("Flash")
+            self.flash_combobox.setCurrentIndex(0)
+            write_button.clicked.connect(self.send_hexfile)
+            read_button.clicked.connect(self.receive_hexfile)
+            self.grid.addWidget(write_button, 1000, 1)
+            self.grid.addWidget(read_button, 1000, 2)
+            self.grid.addWidget(self.flash_combobox, 1000, 3)
+            # self.grid.addWidget(QLabel("Flash"),14,3)
+            self.receive_hexfile()
+        except Exception as e:
+            print(e)
 
 if __name__ == '__main__':
     open_main_window()
