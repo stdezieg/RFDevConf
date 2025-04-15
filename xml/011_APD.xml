@@ -1,18 +1,18 @@
 <unit id="11" name="APD">
 
-  <param name="Gain ADC1" unit="" scalefactor="1" offset="0" visualization="text" value="1">
+  <param name="Gain ADC1" unit="" scalefactor="0.00392" offset="0" visualization="text" value="1">
     <reg adr="00" bitmask="00ff"/>
   </param>
 
-  <param name="Gain ADC2" unit="" scalefactor="1" offset="0" visualization="text" value="1">
+  <param name="Gain ADC2" unit="" scalefactor="0.00392" offset="0" visualization="text" value="1">
     <reg adr="01" bitmask="00ff"/>
   </param>
 
-  <param name="Threshold ADC2" unit="1/X" scalefactor="1" offset="0" visualization="text" value="1">
+  <param name="Threshold ADC2" unit="1/X" scalefactor="0.00392" offset="0" visualization="text" value="1">
     <reg adr="02" bitmask="00ff"/>
   </param>
 
-  <param name="Threshold Ratio" unit="%" scalefactor="1" offset="0" visualization="text" value="80">
+  <param name="Threshold Ratio" unit="%" scalefactor="0.00392" offset="0" visualization="text" value="80">
     <reg adr="03" bitmask="00ff"/>
   </param>
 

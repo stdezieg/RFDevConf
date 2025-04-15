@@ -248,7 +248,7 @@ class RFDevConf_Reg_Data:
         return default # key does not exist or value is empty so return default value
 
     def set_reg_from_wid(self, wid={}):
-        #value = self.val_of_dict(wid,"value",0.0) * self.val_of_dict(wid,"scalefactor") + self.val_of_dict(wid,"offset",0.0)
+        # value = self.val_of_dict(wid,"value",0.0) * self.val_of_dict(wid,"scalefactor") + self.val_of_dict(wid,"offset",0.0)
         value = self.val_of_dict(wid,"value",0)
         my_ReBiCo = self.ReBiCo() #helper to handle bit distributen into register
 
@@ -308,7 +308,9 @@ class RFDevConf_Reg_Data:
 
         #go thrue all widigts and set corresponding bits in register map
         for elem in self.wid_dict:
+            # print(elem)
             self.set_reg_from_wid(elem)
+
 
         return self.get_reg_dict_as_df(compatibility_extensions)
 
@@ -400,7 +402,8 @@ class RFDevConf_Mainwindow(QMainWindow):                                       #
 
     def initMe(self,input_xml):                                             # window init params
         self.setWindowTitle('RFDevConf' + ' - ' + input_xml[4:-4])
-        self.setGeometry(300, 300, 325, 325)
+        # self.setGeometry(300, 300, 325, 325)
+        self.setGeometry(250, 250, 200, 1)
         self.setWindowIcon(QIcon("./png/index.png"))
         menubar = self.menuBar()
         start = menubar.addMenu("&Start")
@@ -435,6 +438,8 @@ class CEL_hexflash(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.setGeometry(300, 300, 325, 1)
+        # self.setGeometry(200, 200, 200, 1)
+
         self.setWindowIcon(QIcon("./png/index.png"))
         self.setWindowTitle("CEL Hexflash Application")
 
@@ -505,7 +510,7 @@ class DeviceConfiguration(QWidget):
         try: # def yield_widget_values(self)
             for i, row in self.wid_df.iterrows():
                 if isinstance(self.list_of_widgets[i], QLineEdit) == True:
-                    self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
+                    self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
                 elif isinstance(self.list_of_widgets[i], QCheckBox) == True:
                     if self.list_of_widgets[i].isChecked():
                         self.wid_df.loc[i, 'value'] = 1
@@ -542,7 +547,9 @@ class DeviceConfiguration(QWidget):
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
-        self.setGeometry(300, 300, 325, 1)
+        # self.setGeometry(300, 300, 325, 1)
+        self.setGeometry(200, 200, 200, 1)
+
         self.make_form(input_xml)
 
     def send_hexfile(self):
@@ -632,12 +639,14 @@ class DeviceConfiguration(QWidget):
             data_in = data_in[4:]
 
         self.reg_df = tmp_df
+        # print(self.reg_df)
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
         self.update_widgets() # Update instance variables and UI
 
 
     def update_widgets(self):
         # print("gui init:", self.gui_init)
+        print(self.wid_df.to_string())
         try:
             for i, row in self.wid_df.iterrows():
 
@@ -652,7 +661,7 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                         self.grid.addWidget(widget, i, 2)
                     else:
-                        self.list_of_widgets[i].setText(str(row['value']))
+                        self.list_of_widgets[i].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
 
                 elif row['visualization'] == 'chkbox':
                     if self.gui_init == 0:
@@ -712,7 +721,7 @@ class DeviceConfiguration(QWidget):
             self.grid.addWidget(read_button, 1000, 2)
             self.grid.addWidget(self.flash_combobox, 1000, 3)
             # self.grid.addWidget(QLabel("Flash"),14,3)
-            self.receive_hexfile()
+            # self.receive_hexfile()
         except Exception as e:
             print(e)
 

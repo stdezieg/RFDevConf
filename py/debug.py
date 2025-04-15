@@ -410,7 +410,19 @@ if __name__ == '__main__':
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=16))) # returns 02BC0001E84800000000000000000000 on valid agc
     ##############################################################################################################################
     # 65536
-    ser.write(bitstring_to_bytes(read_request(flash=0, address=50)))
+
+
+    # ser.write(bitstring_to_bytes(read_request(flash=1, address=65536)))
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65536 ,data="00FF00FF001E00CC0000000000000000")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 65536 ,data="00000000000000000000000000000000")))
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 16,data="01020304050607080910111213141516")))
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 24,data="DDAAFF1337FF112233445566778899D7")))
+    # ser.write(bitstring_to_bytes(read_request(flash=0, address=16)))
+
+
+    #
     # ser.write(bitstring_to_bytes(read_request(flash=0, address=16)))
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 16,data="DDAAFF1337FF112233445566778899D7")))
 
