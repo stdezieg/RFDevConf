@@ -510,7 +510,10 @@ class DeviceConfiguration(QWidget):
         try: # def yield_widget_values(self)
             for i, row in self.wid_df.iterrows():
                 if isinstance(self.list_of_widgets[i], QLineEdit) == True:
-                    self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
+                    if self.module_name == "Fast_AGC_readonly":
+                        self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
+                    elif self.module_name == "APD":
+                        self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
                 elif isinstance(self.list_of_widgets[i], QCheckBox) == True:
                     if self.list_of_widgets[i].isChecked():
                         self.wid_df.loc[i, 'value'] = 1
@@ -646,7 +649,7 @@ class DeviceConfiguration(QWidget):
 
     def update_widgets(self):
         # print("gui init:", self.gui_init)
-        print(self.wid_df.to_string())
+        # print(self.wid_df.to_string())
         try:
             for i, row in self.wid_df.iterrows():
 
@@ -661,7 +664,10 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                         self.grid.addWidget(widget, i, 2)
                     else:
-                        self.list_of_widgets[i].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
+                        if self.module_name == "APD":
+                            self.list_of_widgets[i].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
+                        elif self.module_name == "Fast_AGC_readonly":
+                            self.list_of_widgets[i].setText(str(row['value']))
 
                 elif row['visualization'] == 'chkbox':
                     if self.gui_init == 0:
@@ -700,7 +706,8 @@ class DeviceConfiguration(QWidget):
             self.list_of_widgets = []
             self.xml_path = "xml/"
             self.input_xml_file = self.xml_path + input_xml
-
+            self.module_name = input_xml[4:-4]
+            # print(self.module_name)
             self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
             self.reg_data = RFDevConf_Reg_Data()
             self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
@@ -721,7 +728,7 @@ class DeviceConfiguration(QWidget):
             self.grid.addWidget(read_button, 1000, 2)
             self.grid.addWidget(self.flash_combobox, 1000, 3)
             # self.grid.addWidget(QLabel("Flash"),14,3)
-            # self.receive_hexfile()
+            self.receive_hexfile()
         except Exception as e:
             print(e)
 

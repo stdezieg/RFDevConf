@@ -47,7 +47,7 @@
     <reg adr="0B" bitmask="0002"/>
   </param>
   
-  <param name="Update Rate" unit="CLKs" scalefactor="50" offset="0" visualization="text" value="33">
+  <param name="Update Rate" unit="CLKs" scalefactor="1" offset="0" visualization="text" value="33">
     <reg adr="09" bitmask="ffff"/>
     <reg adr="0A" bitmask="ffff"/>
   </param>
