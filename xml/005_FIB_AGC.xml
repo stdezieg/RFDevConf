@@ -1,5 +1,3 @@
-<!-- addresses are currently ignored and hardcoded in python script, do not change the xml file structure
-     if you change the order of the param names the tool will send data to wrong locations -->
 
 <unit id="0x" name="Amplitude-Controller">
 
@@ -54,10 +52,6 @@
 
   <param name="Amplitude Window" unit="" scalefactor="1" offset="0" visualization="text" value="1">
     <reg adr="08" bitmask="ffff"/>
-  </param>
-
-  <param name="Set Trigger Out" visualization="chkbox" value="0">
-    <reg adr="0B" bitmask="0080"/>
   </param>
     
 </unit>

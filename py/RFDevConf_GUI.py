@@ -510,7 +510,7 @@ class DeviceConfiguration(QWidget):
         try: # def yield_widget_values(self)
             for i, row in self.wid_df.iterrows():
                 if isinstance(self.list_of_widgets[i], QLineEdit) == True:
-                    if self.module_name == "Fast_AGC_readonly":
+                    if self.module_name == "FIB_AGC":
                         self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
                     elif self.module_name == "APD":
                         self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
@@ -666,7 +666,7 @@ class DeviceConfiguration(QWidget):
                     else:
                         if self.module_name == "APD":
                             self.list_of_widgets[i].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
-                        elif self.module_name == "Fast_AGC_readonly":
+                        elif self.module_name == "FIB_AGC":
                             self.list_of_widgets[i].setText(str(row['value']))
 
                 elif row['visualization'] == 'chkbox':
