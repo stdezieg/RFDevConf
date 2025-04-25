@@ -30,7 +30,7 @@
     <reg adr="12" bitmask="04"/>
   </param>
 
-      <param name="Update Rate" unit="us" scalefactor="50" offset="0" visualization="text" value="50.0">
+      <param name="Update Rate" unit="us" scalefactor="50" offset="0" visualization="text" value="50.1">
     <reg adr="08" bitmask="ff"/> 
     <reg adr="09" bitmask="ff"/>
     <reg adr="0A" bitmask="ff"/>

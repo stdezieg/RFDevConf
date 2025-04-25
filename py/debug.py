@@ -412,6 +412,10 @@ if __name__ == '__main__':
     # 65536
 
 
+
+
+
+
     # ser.write(bitstring_to_bytes(read_request(flash=1, address=65536)))
 
     # ser.write(bitstring_to_bytes(write_request(flash = 1, address = 65536 ,data="00FF00FF001E00CC0000000000000000")))
@@ -447,6 +451,9 @@ if __name__ == '__main__':
 
     # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 0,data="00000000000000000000133700000000")))
     # ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.write_request(flash = 0, address = 0, data ="00000000000000000000133700000000"))) # reset!!!))
+
+    # ser.write(bitstring_to_bytes(write_request(flash = 0, address = 16,data="0000000000000000000000000000000")))
+    # ser.write(bitstring_to_bytes(read_request(flash=0, address=32)))
 
 
     data_in = []

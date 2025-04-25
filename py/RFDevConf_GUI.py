@@ -13,6 +13,7 @@ from bitstring import BitArray
 import pandas as pd
 import xmltodict
 import copy
+import traceback
 
 def formatRegDiscription(MemAddress, MemContent16bitHex):
     # convert address from integer to 4 hexadecimal digits (i.e. 16 bit)
@@ -111,6 +112,7 @@ def xml_to_dataframe_xml2dict(infile):
                 DF_dict["ddcnt"] = str(int(i-1))
             else:
                 print("ERROR")
+
         df = pd.concat([df, pd.DataFrame([DF_dict])], ignore_index=True)   # transform to dataframe
         elem_cnt += 1
 
@@ -506,30 +508,60 @@ class DeviceConfiguration(QWidget):
     def gen_data_string(self):
         data_out = ""
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
-
+        hidden = 0
         try: # def yield_widget_values(self)
             for i, row in self.wid_df.iterrows():
-                if isinstance(self.list_of_widgets[i], QLineEdit) == True:
-                    if self.module_name == "FIB_AGC":
-                        self.wid_df.loc[i, 'value'] = self.list_of_widgets[i].text()
-                    elif self.module_name == "APD":
-                        self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
-                elif isinstance(self.list_of_widgets[i], QCheckBox) == True:
-                    if self.list_of_widgets[i].isChecked():
+                if row['visualization'] == 'hidden':
+                    hidden = hidden + 1
+                elif isinstance(self.list_of_widgets[i-hidden], QLineEdit) == True:
+########################################################################################### (6)
+
+                    # if self.module_name == "FIB_AGC":
+                    #     self.wid_df.loc[i, 'value'] = self.list_of_widgets[i-hidden].text()
+                    # elif self.module_name == "APD":
+                    #     self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i-hidden].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
+                    # else:
+                    #     self.wid_df.loc[i, 'value'] = self.list_of_widgets[i-hidden].text()
+                    #     # pass
+
+                    # print(type(self.list_of_widgets[i-hidden].text()), self.list_of_widgets[i-hidden].text())
+
+                    # a = 50.0
+                    # b = "50.0"
+                    # print(float(a))
+                    # print(float(b))
+                    #idea:
+                    if float(self.list_of_widgets[i-hidden].text()) % 1 == 0:       # this variable can be treatet as integer
+                        # print(float(self.list_of_widgets[i-hidden].text()) % 1)
+                        # print("remainder of this variable is zero! cast to int!")
+                        self.wid_df.loc[i, 'value'] = int(float(self.list_of_widgets[i-hidden].text())) // int(float(row['scalefactor']))
+                    else:                                                           # this variable is float
+                        self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i-hidden].text()) // round(float(row['scalefactor']))
+
+
+
+                elif isinstance(self.list_of_widgets[i-hidden], QCheckBox) == True:
+                    if self.list_of_widgets[i-hidden].isChecked():
                         self.wid_df.loc[i, 'value'] = 1
                     else:
                         self.wid_df.loc[i, 'value'] = 0
-                elif isinstance(self.list_of_widgets[i], QComboBox) == True:
-                    self.wid_df.loc[i, 'value'] = row['ddvalue'+str(self.list_of_widgets[i].currentIndex()+1)]
+                elif isinstance(self.list_of_widgets[i-hidden], QComboBox) == True:
+                    self.wid_df.loc[i, 'value'] = row['ddvalue'+str(self.list_of_widgets[i-hidden].currentIndex()+1)]
         except Exception as e:
             print(e)
 
+        print(self.wid_df.to_string())
         self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
+        print(self.reg_df)
+########################################################################################### (7)
         for i, row in self.reg_df.iterrows():
-            data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i, 'value']))
+            # data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i + int(self.wid_df.iloc[0]["adr1"], 16), 'value']))
+            data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i, 'value'])) # welcher type liegt in reg_df?
+
+
         chunks, chunk_size = len(data_out), 32
         data_out = [data_out[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
-
+###########################################################################################
         return data_out
 
     def initMe(self, input_xml):                                    # widget init params
@@ -569,7 +601,7 @@ class DeviceConfiguration(QWidget):
             self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.erase_flash(1)))
             time.sleep(1.5)
 
-        address = 65536 if self.flash_flag else 16  # Set initial address
+        address = 65536 if self.flash_flag else 16  # Set initial address  @@@@@@@@ (7) sollte
         start_time = time.time()
 
         while data_out:
@@ -626,35 +658,30 @@ class DeviceConfiguration(QWidget):
                 frame_in = RFDevConf.ReceiveFrame(BitArray(self.ser.read(25)).bin).cleanup[47:]
                 data_in.append('{:0{}X}'.format(int(frame_in, 2), len(frame_in) // 4))
 
-                # if cnt == 2:  # Break condition (dynamic based on application)
                 if cnt == self.register_depth // 8 + (self.register_depth % 8 > 0):  # Break condition (dynamic based on application)
                     break
 
-                # Request next data block
                 address += 16 if self.flash_flag else 8
                 self.ser.write(RFDevConf.bitstring_to_bytes(RFDevConf.read_request(flash=self.flash_flag, address=address)))
 
-        data_in = ''.join(data_in)[:52] # Process received data
+        data_in = ''.join(data_in)
         tmp_df = pd.DataFrame(columns=['adr', 'value']) # Create DataFrame from received values
 
-        for i in range(len(self.reg_df)):
-            tmp_df.loc[i] = {'adr': "{:01x}".format(i), 'value': int(data_in[:4], 16)}
+        for i in range(self.register_depth):
+            tmp_df.loc[i] = {'adr': "{:01x}".format(i + int(self.wid_df.iloc[0]["adr1"], 16)), 'value': int(data_in[:4], 16)}
             data_in = data_in[4:]
 
         self.reg_df = tmp_df
-        # print(self.reg_df)
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
         self.update_widgets() # Update instance variables and UI
 
 
     def update_widgets(self):
-        # print("gui init:", self.gui_init)
-        # print(self.wid_df.to_string())
         try:
+            hidden = 0
             for i, row in self.wid_df.iterrows():
-
                 if row['visualization'] == 'hidden':
-                    print("hidden parameter!")
+                    hidden = hidden + 1
                 elif row['visualization'] == 'text':
                     if self.gui_init == 0:
                         self.grid.addWidget(QLabel(row['unit']), i, 3)
@@ -664,10 +691,20 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                         self.grid.addWidget(widget, i, 2)
                     else:
-                        if self.module_name == "APD":
-                            self.list_of_widgets[i].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
-                        elif self.module_name == "FIB_AGC":
-                            self.list_of_widgets[i].setText(str(row['value']))
+########################################################################################### (6)
+                        # if self.module_name == "APD":
+                        #     self.list_of_widgets[i-hidden].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
+                        # elif self.module_name == "FIB_AGC":
+                        #     self.list_of_widgets[i-hidden].setText(str(row['value']))
+                        # else:
+                        #     self.list_of_widgets[i-hidden].setText(str(row['value']))
+
+                        if float(row['value']) % 1 == 0:       # this variable can be treatet as integer
+                            # print(float(self.list_of_widgets[i-hidden].text()) % 1)
+                            # print("remainder of this variable is zero! cast to int!")
+                            self.wid_df.loc[i, 'value'] = int(float(row['value'])) * int(float(row['scalefactor'])) # muss eigentlich als das abgelegt werden was es am anfang war
+                        else:                                                           # this variable is float
+                            self.wid_df.loc[i, 'value'] = float(row['value']) * round(float(row['scalefactor']))
 
                 elif row['visualization'] == 'chkbox':
                     if self.gui_init == 0:
@@ -678,9 +715,9 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                     else:
                         if '1' in str(row['value']):
-                            self.list_of_widgets[i].setChecked(True)
+                            self.list_of_widgets[i-hidden].setChecked(True)
                         elif '0' in str(row['value']):
-                            self.list_of_widgets[i].setChecked(False)
+                            self.list_of_widgets[i-hidden].setChecked(False)
 
                 elif row['visualization'] == 'dropdown':
                     if self.gui_init == 0:
@@ -692,12 +729,11 @@ class DeviceConfiguration(QWidget):
                         for i in range(int(row['ddcnt'])):
                             widget.addItem(row['ddown'+str(i+1)])
                     else:
-                        self.list_of_widgets[i].setCurrentIndex(row['value']) ## !!! gibt probleme mit index und value
+                        self.list_of_widgets[i-hidden].setCurrentIndex(row['value'])
                         pass
             self.gui_init = 1
         except Exception as e:
-            print(e)
-
+            print(i,e)
 
 
     def make_form(self, input_xml):
@@ -707,14 +743,12 @@ class DeviceConfiguration(QWidget):
             self.xml_path = "xml/"
             self.input_xml_file = self.xml_path + input_xml
             self.module_name = input_xml[4:-4]
-            # print(self.module_name)
+            print(self.module_name)
             self.wid_df = xml_to_dataframe_xml2dict(self.xml_path + input_xml)
             self.reg_data = RFDevConf_Reg_Data()
             self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
             self.gui_init = 0
             self.register_depth = len(self.reg_df)
-            # print("register depth is: ", self.register_depth)
-            # print(self.register_depth // 8 + (self.register_depth % 8 > 0))
             self.update_widgets()
             write_button = QPushButton("Write")                     # append read/write buttons at the end
             read_button = QPushButton("Read")
@@ -731,6 +765,7 @@ class DeviceConfiguration(QWidget):
             self.receive_hexfile()
         except Exception as e:
             print(e)
+            print(traceback.format_exc())
 
 if __name__ == '__main__':
     open_main_window()
