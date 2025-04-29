@@ -514,32 +514,11 @@ class DeviceConfiguration(QWidget):
                 if row['visualization'] == 'hidden':
                     hidden = hidden + 1
                 elif isinstance(self.list_of_widgets[i-hidden], QLineEdit) == True:
-########################################################################################### (6)
+                    if float(self.list_of_widgets[i-hidden].text()) % 1 == 0:
 
-                    # if self.module_name == "FIB_AGC":
-                    #     self.wid_df.loc[i, 'value'] = self.list_of_widgets[i-hidden].text()
-                    # elif self.module_name == "APD":
-                    #     self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i-hidden].text()) * round(1/float(row['scalefactor'])) # hier mal 1/scalefactor
-                    # else:
-                    #     self.wid_df.loc[i, 'value'] = self.list_of_widgets[i-hidden].text()
-                    #     # pass
-
-                    # print(type(self.list_of_widgets[i-hidden].text()), self.list_of_widgets[i-hidden].text())
-
-                    # a = 50.0
-                    # b = "50.0"
-                    # print(float(a))
-                    # print(float(b))
-                    #idea:
-                    if float(self.list_of_widgets[i-hidden].text()) % 1 == 0:       # this variable can be treatet as integer
-                        # print(float(self.list_of_widgets[i-hidden].text()) % 1)
-                        # print("remainder of this variable is zero! cast to int!")
-                        self.wid_df.loc[i, 'value'] = int(float(self.list_of_widgets[i-hidden].text())) // int(float(row['scalefactor']))
-                    else:                                                           # this variable is float
-                        self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i-hidden].text()) // round(float(row['scalefactor']))
-
-
-
+                        self.wid_df.loc[i, 'value'] = int(float(self.list_of_widgets[i-hidden].text())) * int(float(row['scalefactor']))
+                    else:
+                        self.wid_df.loc[i, 'value'] = float(self.list_of_widgets[i-hidden].text()) * round(float(row['scalefactor']))
                 elif isinstance(self.list_of_widgets[i-hidden], QCheckBox) == True:
                     if self.list_of_widgets[i-hidden].isChecked():
                         self.wid_df.loc[i, 'value'] = 1
@@ -550,18 +529,15 @@ class DeviceConfiguration(QWidget):
         except Exception as e:
             print(e)
 
-        print(self.wid_df.to_string())
+        # print(self.wid_df.to_string())
         self.reg_df = self.reg_data.DataFrame2Reg(self.wid_df, False)
-        print(self.reg_df)
-########################################################################################### (7)
+        # print(self.reg_df)
         for i, row in self.reg_df.iterrows():
-            # data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i + int(self.wid_df.iloc[0]["adr1"], 16), 'value']))
             data_out = data_out + "{:04X}".format(int(self.reg_df.loc[i, 'value'])) # welcher type liegt in reg_df?
-
 
         chunks, chunk_size = len(data_out), 32
         data_out = [data_out[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
-###########################################################################################
+
         return data_out
 
     def initMe(self, input_xml):                                    # widget init params
@@ -671,8 +647,11 @@ class DeviceConfiguration(QWidget):
             tmp_df.loc[i] = {'adr': "{:01x}".format(i + int(self.wid_df.iloc[0]["adr1"], 16)), 'value': int(data_in[:4], 16)}
             data_in = data_in[4:]
 
+
         self.reg_df = tmp_df
+        # print(self.reg_df)
         self.wid_df = self.reg_data.Reg2DataFrame(self.reg_df)
+        # print(self.wid_df.to_string())
         self.update_widgets() # Update instance variables and UI
 
 
@@ -691,20 +670,10 @@ class DeviceConfiguration(QWidget):
                         self.list_of_widgets.append(widget)
                         self.grid.addWidget(widget, i, 2)
                     else:
-########################################################################################### (6)
-                        # if self.module_name == "APD":
-                        #     self.list_of_widgets[i-hidden].setText(str(round((row['value'] * float(row['scalefactor'])),2)))
-                        # elif self.module_name == "FIB_AGC":
-                        #     self.list_of_widgets[i-hidden].setText(str(row['value']))
-                        # else:
-                        #     self.list_of_widgets[i-hidden].setText(str(row['value']))
-
-                        if float(row['value']) % 1 == 0:       # this variable can be treatet as integer
-                            # print(float(self.list_of_widgets[i-hidden].text()) % 1)
-                            # print("remainder of this variable is zero! cast to int!")
-                            self.wid_df.loc[i, 'value'] = int(float(row['value'])) * int(float(row['scalefactor'])) # muss eigentlich als das abgelegt werden was es am anfang war
-                        else:                                                           # this variable is float
-                            self.wid_df.loc[i, 'value'] = float(row['value']) * round(float(row['scalefactor']))
+                        if float(row['value']) % 1 == 0:
+                            self.list_of_widgets[i-hidden].setText(str(int(float(row['value'])) // int(float(row['scalefactor']))))
+                        else:
+                            self.list_of_widgets[i-hidden].setText(str(float(row['value']) // round(float(row['scalefactor']))))
 
                 elif row['visualization'] == 'chkbox':
                     if self.gui_init == 0:
